@@ -51,7 +51,7 @@ class TriageResponse(BaseModel):
     )
     deadline: Optional[str] = Field(
         default=None,
-        description="Deadline if mentioned or implied (ISO 8601 format or natural language)",
+        description="Deadline if mentioned or implied. Must be in timestamp format: YYYY-MM-DD HH:MM:SS+00 (e.g., '2024-06-09 16:37:21+00'). If no specific deadline, leave as null.",
     )
     requires_human_review: bool = Field(
         ...,
