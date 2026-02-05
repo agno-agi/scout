@@ -6,7 +6,7 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "sh -c 'uvicorn app.main:app --host 0.0.0.0 --port $PORT'",
+    "startCommand": "python -m app.main",
     "sleepApplication": false,
     "useLegacyStacker": false,
     "limits": {
