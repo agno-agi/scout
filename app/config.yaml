@@ -3,12 +3,7 @@ chat:
     scout:
       - "Tell me about yourself"
       - "What's our PTO policy?"
-      - "How do I deploy to production?"
       - "What are our Q4 OKRs?"
-      - "What is our system architecture?"
-      - "How do I handle incidents?"
     reasoning-scout:
       - "Tell me about yourself"
-      - "Find all information about our system architecture"
       - "What are the data retention requirements and why?"
-      - "What's our approach to disaster recovery?"

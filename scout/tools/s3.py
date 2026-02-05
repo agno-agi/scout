@@ -23,6 +23,7 @@ class S3Tools(Toolkit):
         self.register(self.search_files)
         self.register(self.read_file)
         self.register(self.write_file)
+        self.register(self.check_connection)
 
     @tool
     def list_buckets(self) -> str:
@@ -37,6 +38,15 @@ class S3Tools(Toolkit):
             return "No buckets found."
 
         lines = ["## S3 Buckets", ""]
+
+        # Show mock mode warning if applicable
+        if self.connector.is_mock_mode:
+            status = self.connector.connection_status
+            lines.append("**[MOCK MODE]** Using simulated data.")
+            if status.get("mock_reason"):
+                lines.append(f"Reason: {status['mock_reason']}")
+            lines.append("")
+
         for bucket in buckets:
             lines.append(f"**{bucket['name']}**")
             if bucket.get("description"):
@@ -195,6 +205,45 @@ class S3Tools(Toolkit):
             return f"Error: {result['error']}"
 
         return f"Wrote file to `{result['id']}`"
+
+
+    @tool
+    def check_connection(self) -> str:
+        """Check S3 connection status and diagnose issues.
+
+        Use this to debug why you might be seeing mock data instead of real S3.
+        """
+        status = self.connector.connection_status
+
+        lines = ["## S3 Connection Status", ""]
+
+        if status["is_mock_mode"]:
+            lines.append("**Mode:** MOCK (using simulated data)")
+            lines.append("")
+            lines.append("**Why mock mode?**")
+            if status.get("mock_reason"):
+                lines.append(f"  {status['mock_reason']}")
+            lines.append("")
+            lines.append("**To use real S3:**")
+            lines.append("  1. Install boto3: `pip install boto3`")
+            lines.append("  2. Set environment variables:")
+            lines.append("     - AWS_ACCESS_KEY_ID")
+            lines.append("     - AWS_SECRET_ACCESS_KEY")
+            lines.append("     - AWS_REGION (optional, defaults to us-east-1)")
+            lines.append("  3. Restart the application")
+        else:
+            lines.append("**Mode:** LIVE (connected to real S3)")
+            lines.append(f"**Region:** {status['region']}")
+            lines.append(f"**Using explicit credentials:** {status['has_explicit_credentials']}")
+
+        lines.append("")
+        lines.append("**Debug info:**")
+        lines.append(f"  - boto3 installed: {status['boto3_available']}")
+        lines.append(f"  - authenticated: {status['authenticated']}")
+        lines.append(f"  - has S3 client: {status['has_client']}")
+        lines.append(f"  - mock forced: {status['use_mock_forced']}")
+
+        return "\n".join(lines)
 
 
 def _format_size(size: int) -> str:

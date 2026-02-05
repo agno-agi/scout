@@ -1,4 +1,4 @@
-"""S3 connector (stub implementation with mock data).
+"""S3 connector with support for real S3 buckets and mock data for development.
 
 S3 is the primary connector for demos and most enterprise deployments.
 """
@@ -6,1101 +6,49 @@ S3 is the primary connector for demos and most enterprise deployments.
 from typing import Any
 
 from scout.connectors.base import BaseConnector
-
-# Mock data simulating a typical company's S3 knowledge base
-MOCK_BUCKETS: list[dict[str, Any]] = [
-    {"name": "company-docs", "region": "us-east-1", "description": "Company documents and policies"},
-    {"name": "engineering-docs", "region": "us-east-1", "description": "Engineering documentation"},
-    {"name": "data-exports", "region": "us-east-1", "description": "Data exports and reports"},
-]
-
-MOCK_FILES: dict[str, list[dict[str, Any]]] = {
-    "company-docs": [
-        {"key": "policies/employee-handbook.md", "size": 45000, "modified": "2024-01-15"},
-        {"key": "policies/pto-policy.md", "size": 8500, "modified": "2024-02-01"},
-        {"key": "policies/data-retention.md", "size": 12000, "modified": "2024-03-10"},
-        {"key": "policies/security-policy.md", "size": 25000, "modified": "2024-01-20"},
-        {"key": "policies/remote-work-policy.md", "size": 6000, "modified": "2024-02-15"},
-        {"key": "hr/benefits-guide.md", "size": 18000, "modified": "2024-02-15"},
-        {"key": "hr/onboarding-checklist.md", "size": 5000, "modified": "2024-03-01"},
-        {"key": "hr/expense-policy.md", "size": 4500, "modified": "2024-01-10"},
-        {"key": "planning/q4-2024-okrs.md", "size": 15000, "modified": "2024-10-01"},
-        {"key": "planning/q3-2024-okrs.md", "size": 14000, "modified": "2024-07-01"},
-        {"key": "planning/2024-strategy.md", "size": 28000, "modified": "2024-01-05"},
-        {"key": "planning/budget-2024.md", "size": 8000, "modified": "2024-01-15"},
-    ],
-    "engineering-docs": [
-        {"key": "architecture/system-overview.md", "size": 35000, "modified": "2024-04-20"},
-        {"key": "architecture/api-design.md", "size": 22000, "modified": "2024-05-15"},
-        {"key": "architecture/database-schema.md", "size": 18000, "modified": "2024-03-20"},
-        {"key": "architecture/security-architecture.md", "size": 15000, "modified": "2024-04-01"},
-        {"key": "runbooks/deployment.md", "size": 18000, "modified": "2024-03-01"},
-        {"key": "runbooks/incident-response.md", "size": 25000, "modified": "2024-03-15"},
-        {"key": "runbooks/oncall-guide.md", "size": 12000, "modified": "2024-04-01"},
-        {"key": "runbooks/database-maintenance.md", "size": 10000, "modified": "2024-02-20"},
-        {"key": "runbooks/rollback-procedures.md", "size": 8000, "modified": "2024-03-10"},
-        {"key": "guides/getting-started.md", "size": 8000, "modified": "2024-05-01"},
-        {"key": "guides/code-review.md", "size": 10000, "modified": "2024-04-15"},
-        {"key": "guides/testing-guide.md", "size": 12000, "modified": "2024-04-20"},
-        {"key": "guides/api-development.md", "size": 15000, "modified": "2024-05-10"},
-        {"key": "rfcs/rfc-001-search-redesign.md", "size": 20000, "modified": "2024-05-20"},
-        {"key": "rfcs/rfc-002-api-v2.md", "size": 18000, "modified": "2024-06-01"},
-        {"key": "rfcs/rfc-003-auth-overhaul.md", "size": 16000, "modified": "2024-06-15"},
-    ],
-    "data-exports": [
-        {"key": "reports/monthly-metrics-2024-01.csv", "size": 45000, "modified": "2024-02-01"},
-        {"key": "reports/monthly-metrics-2024-02.csv", "size": 48000, "modified": "2024-03-01"},
-        {"key": "reports/monthly-metrics-2024-03.csv", "size": 52000, "modified": "2024-04-01"},
-        {"key": "reports/monthly-metrics-2024-04.csv", "size": 50000, "modified": "2024-05-01"},
-        {"key": "reports/monthly-metrics-2024-05.csv", "size": 55000, "modified": "2024-06-01"},
-        {"key": "reports/quarterly-review-q1-2024.md", "size": 30000, "modified": "2024-04-15"},
-        {"key": "reports/quarterly-review-q2-2024.md", "size": 32000, "modified": "2024-07-15"},
-        {"key": "exports/user-data-export.json", "size": 100000, "modified": "2024-06-01"},
-        {"key": "exports/analytics-dashboard.json", "size": 25000, "modified": "2024-06-01"},
-    ],
-}
-
-MOCK_CONTENTS: dict[str, str] = {
-    "company-docs/policies/employee-handbook.md": """# Employee Handbook
-
-## Welcome to Acme Corp
-
-This handbook outlines our company policies, benefits, and expectations.
-
-## Table of Contents
-1. Core Values
-2. Employment Policies
-3. Benefits
-4. Time Off (PTO)
-5. Remote Work
-6. Code of Conduct
-
-## 1. Core Values
-
-Our core values guide everything we do:
-- **Customer First** — We exist to serve our customers
-- **Move Fast** — Speed matters, but not at the expense of quality
-- **Be Transparent** — Default to openness
-- **Own Your Work** — Take responsibility for outcomes
-
-## 2. Employment Policies
-
-### At-Will Employment
-Employment at Acme Corp is at-will, meaning either party may terminate the relationship at any time.
-
-### Equal Opportunity
-We are an equal opportunity employer and do not discriminate based on race, color, religion, sex, national origin, age, disability, or any other protected characteristic.
-
-## 3. Benefits
-
-See the Benefits Guide for detailed information on:
-- Health insurance (medical, dental, vision)
-- 401(k) with company match
-- Life insurance
-- Disability coverage
-- Professional development budget
-
-## 4. Time Off (PTO)
-
-### PTO Policy
-- Unlimited PTO with manager approval
-- Minimum 2 weeks recommended per year
-- No carryover or payout (it's unlimited!)
-- Please give 2 weeks notice for vacations over 1 week
-
-### Holidays
-Company-observed holidays:
-- New Year's Day
-- MLK Day
-- Presidents Day
-- Memorial Day
-- Independence Day
-- Labor Day
-- Thanksgiving (Thu + Fri)
-- Christmas Eve & Christmas Day
-- New Year's Eve
-
-### Sick Leave
-Take what you need. No questions asked for short-term illness. For extended illness (5+ days), please coordinate with HR.
-
-## 5. Remote Work
-
-### Hybrid Policy
-- Minimum 2 days in office per week
-- Core hours: 10am-4pm local time
-- All-hands meetings: Tuesdays at 10am PT
-
-### Home Office
-- $500 stipend for home office setup (one-time)
-- Monthly internet reimbursement: $50
-
-## 6. Code of Conduct
-
-We are committed to providing a respectful, inclusive workplace. This includes:
-- Treating all colleagues with respect
-- No harassment or discrimination
-- Protecting confidential information
-- Reporting concerns to HR or your manager
-
-For questions about any policy, contact hr@acme.com.
-""",
-    "company-docs/policies/pto-policy.md": """# PTO Policy
-
-## Overview
-Acme Corp offers unlimited paid time off (PTO) to all full-time employees.
-
-## Guidelines
-
-### Requesting Time Off
-1. Submit requests via the HR system
-2. Get manager approval before booking travel
-3. For 5+ consecutive days, give at least 2 weeks notice
-4. For 2+ weeks, give at least 1 month notice
-
-### Blackout Periods
-Please avoid scheduling PTO during:
-- Last two weeks of each quarter
-- Company all-hands weeks
-- Your team's on-call rotation
-
-### Manager Responsibilities
-- Respond to PTO requests within 48 hours
-- Ensure adequate team coverage
-- Don't deny requests unreasonably
-
-## Frequently Asked Questions
-
-**Q: Is there a maximum amount of PTO I can take?**
-A: No formal maximum, but use good judgment. Most employees take 3-4 weeks per year.
-
-**Q: Can I take PTO during my first 90 days?**
-A: Yes, but keep it minimal while you're ramping up.
-
-**Q: What if I'm sick?**
-A: Sick time doesn't count against your PTO. Take care of yourself.
-
-**Q: Do I get paid out for unused PTO if I leave?**
-A: No, because PTO is unlimited there's nothing to pay out.
-
-For questions, contact hr@acme.com.
-""",
-    "company-docs/policies/data-retention.md": """# Data Retention Policy
-
-## Overview
-This policy defines how long Acme Corp retains different types of data.
-
-## Retention Periods
-
-| Data Type | Retention Period | Notes |
-|-----------|-----------------|-------|
-| Customer data | Duration of contract + 7 years | Legal requirement |
-| Employee records | Duration of employment + 7 years | Legal requirement |
-| Financial records | 7 years | Tax and audit requirements |
-| Email | 3 years | Unless litigation hold |
-| Slack messages | 2 years | Unless litigation hold |
-| System logs | 90 days | Security and debugging |
-| Analytics data | 2 years | Aggregated data kept longer |
-
-## Data Deletion
-
-### Automatic Deletion
-Data is automatically deleted after the retention period expires, unless:
-- Subject to litigation hold
-- Required for ongoing investigation
-- Customer requests earlier deletion (where applicable)
-
-### Manual Deletion Requests
-- Customer data: Process within 30 days per GDPR/CCPA
-- Employee data: Contact HR
-- Other data: Contact legal@acme.com
-
-## Backups
-
-Backups follow the same retention schedule as primary data:
-- Daily backups: 30 days
-- Weekly backups: 90 days
-- Monthly backups: 1 year
-
-## Exceptions
-
-To request an exception to this policy, contact legal@acme.com with:
-- Data type and location
-- Reason for exception
-- Requested retention period
-- Business justification
-
-## Compliance
-
-This policy complies with:
-- GDPR (EU)
-- CCPA (California)
-- SOC 2
-- Industry best practices
-
-Last updated: March 2024
-Contact: legal@acme.com
-""",
-    "company-docs/policies/security-policy.md": """# Security Policy
-
-## Overview
-This policy outlines security requirements for all Acme Corp employees.
-
-## Access Control
-
-### Authentication
-- All systems require SSO authentication
-- MFA is mandatory for all accounts
-- Passwords must be at least 12 characters
-- Password rotation every 90 days
-
-### Authorization
-- Principle of least privilege
-- Access reviews quarterly
-- Immediate revocation on termination
-
-## Device Security
-
-### Company Devices
-- Full disk encryption required
-- Automatic screen lock after 5 minutes
-- Remote wipe capability enabled
-- No unapproved software installation
-
-### Personal Devices (BYOD)
-- Must be enrolled in MDM
-- Company data must be encrypted
-- Separate work profile required
-
-## Data Classification
-
-| Level | Description | Examples | Requirements |
-|-------|-------------|----------|--------------|
-| Public | Safe to share externally | Marketing materials | None |
-| Internal | Company-wide access | Policies, guides | SSO required |
-| Confidential | Need-to-know basis | Financial data, PII | MFA + encryption |
-| Restricted | Highly sensitive | Security keys, credentials | Hardware key + audit |
-
-## Incident Reporting
-
-Report security incidents immediately to:
-- Email: security@acme.com
-- Slack: #security-incidents
-- PagerDuty: Security on-call
-
-## Training
-
-All employees must complete:
-- Security awareness training (annual)
-- Phishing simulation (quarterly)
-- Role-specific training (as needed)
-
-Last updated: January 2024
-Contact: security@acme.com
-""",
-    "company-docs/hr/benefits-guide.md": """# Benefits Guide
-
-## Overview
-Acme Corp offers comprehensive benefits to all full-time employees.
-
-## Health Insurance
-
-### Medical
-- Provider: Blue Cross Blue Shield
-- Plans: PPO, HMO, HDHP
-- Coverage: Employee, Employee + Spouse, Family
-- Company pays: 90% of premium
-
-### Dental
-- Provider: Delta Dental
-- Coverage: Preventive 100%, Basic 80%, Major 50%
-- Annual maximum: $2,000
-
-### Vision
-- Provider: VSP
-- Coverage: Annual exam, frames, lenses/contacts
-- Frame allowance: $200
-
-## 401(k) Retirement Plan
-
-- Provider: Fidelity
-- Company match: 100% up to 4% of salary
-- Vesting: Immediate
-- Contribution limit: IRS annual limit ($23,000 in 2024)
-
-## Life & Disability Insurance
-
-### Life Insurance
-- Basic: 2x annual salary (company paid)
-- Supplemental: Up to 5x salary (employee paid)
-
-### Disability
-- Short-term: 60% of salary, up to 12 weeks
-- Long-term: 60% of salary, after 12 weeks
-
-## Other Benefits
-
-### Professional Development
-- Annual budget: $2,500 per employee
-- Covers: Courses, conferences, certifications, books
-
-### Wellness
-- Gym membership reimbursement: $100/month
-- Mental health: Free therapy sessions (up to 12/year)
-- Wellness days: 2 per year (in addition to PTO)
-
-### Perks
-- Commuter benefits: Pre-tax transit/parking
-- Cell phone: $75/month reimbursement
-- Meals: Catered lunch 3x/week in office
-
-## Enrollment
-
-- New hires: Enroll within 30 days of start date
-- Annual enrollment: November 1-15
-- Qualifying life events: 30 days to make changes
-
-Contact: benefits@acme.com
-""",
-    "company-docs/planning/q4-2024-okrs.md": """# Q4 2024 Company OKRs
-
-## Company Mission
-Make enterprise knowledge accessible and actionable.
-
-## Objective 1: Accelerate Revenue Growth
-
-**Key Results:**
-1. Achieve $10M ARR by end of Q4 (currently $7.5M)
-2. Close 15 new enterprise deals (>$100k ACV)
-3. Reduce monthly churn to below 3% (currently 4.5%)
-4. Expand 5 existing customers to >$500k ACV
-
-**Owner:** Sales Team
-**Status:** On Track
-
-## Objective 2: Improve Product Quality
-
-**Key Results:**
-1. Achieve 99.9% uptime (currently 99.5%)
-2. Reduce P0/P1 bugs to zero in production
-3. Decrease average API response time to <200ms (currently 350ms)
-4. Ship 3 major features from customer roadmap
-
-**Owner:** Engineering Team
-**Status:** At Risk (latency work behind schedule)
-
-## Objective 3: Scale the Team
-
-**Key Results:**
-1. Hire 10 engineers (5 backend, 3 frontend, 2 platform)
-2. Improve eNPS score to 70+ (currently 55)
-3. Complete leadership training for all people managers
-4. Launch engineering blog with 5 posts
-
-**Owner:** People Team
-**Status:** On Track
-
-## Objective 4: Expand Market Presence
-
-**Key Results:**
-1. Launch in 2 new geographic markets (EU, APAC)
-2. Achieve SOC 2 Type II certification
-3. Present at 3 industry conferences
-4. Increase website traffic by 50%
-
-**Owner:** Marketing Team
-**Status:** On Track
-
-## Team-Level OKRs
-See individual team pages for detailed breakdowns:
-- Engineering OKRs
-- Sales OKRs
-- Marketing OKRs
-- People OKRs
-""",
-    "engineering-docs/runbooks/deployment.md": """# Deployment Runbook
-
-## Overview
-This runbook covers deploying to production environments.
-
-## Pre-Deployment Checklist
-
-- [ ] All tests passing in CI
-- [ ] Code review approved
-- [ ] No blocking P0/P1 bugs
-- [ ] Feature flags configured
-- [ ] Monitoring dashboards ready
-- [ ] Rollback plan documented
-
-## Deployment Process
-
-### 1. Prepare Release
-
-```bash
-# Create release branch
-git checkout main
-git pull origin main
-git checkout -b release/v1.2.3
-
-# Update version
-./scripts/bump-version.sh 1.2.3
-
-# Create release notes
-./scripts/generate-changelog.sh
-```
-
-### 2. Deploy to Staging
-
-```bash
-# Deploy to staging
-./scripts/deploy.sh staging
-
-# Run smoke tests
-./scripts/smoke-test.sh staging
-```
-
-Verify in staging:
-- [ ] Core user flows work
-- [ ] No error spikes in logs
-- [ ] Performance acceptable
-
-### 3. Deploy to Production
-
-```bash
-# Deploy to production (canary first)
-./scripts/deploy.sh production --canary
-
-# Monitor for 15 minutes
-# Check: error rates, latency, CPU/memory
-
-# If healthy, full rollout
-./scripts/deploy.sh production --full
-```
-
-### 4. Post-Deployment
-
-- [ ] Verify in production
-- [ ] Update status page
-- [ ] Notify in #deployments Slack channel
-- [ ] Close deployment ticket
-
-## Rollback Procedure
-
-If issues detected:
-
-```bash
-# Immediate rollback
-./scripts/rollback.sh production
-
-# Or rollback to specific version
-./scripts/rollback.sh production --version v1.2.2
-```
-
-After rollback:
-1. Page on-call if not already engaged
-2. Post incident in #incidents
-3. Create post-mortem ticket
-
-## Emergency Contacts
-
-- On-call engineer: See PagerDuty
-- Platform team: #platform-eng
-- SRE: #sre-team
-
-## Common Issues
-
-### Database Migrations Failed
-1. Check migration logs: `kubectl logs -l app=migrations`
-2. Rollback migration: `./scripts/rollback-migration.sh`
-3. Fix migration and retry
-
-### High Error Rates Post-Deploy
-1. Check error logs: `./scripts/tail-errors.sh production`
-2. If related to new code, rollback immediately
-3. If infrastructure, engage platform team
-
-### Performance Degradation
-1. Check APM dashboards
-2. Look for N+1 queries or missing indexes
-3. Consider feature flag to disable slow features
-""",
-    "engineering-docs/runbooks/incident-response.md": """# Incident Response Runbook
-
-## Severity Levels
-
-| Level | Description | Response Time | Examples |
-|-------|-------------|---------------|----------|
-| SEV-1 | Complete outage | 15 minutes | Site down, data loss |
-| SEV-2 | Major degradation | 30 minutes | Core feature broken |
-| SEV-3 | Minor issues | 4 hours | Non-critical bugs |
-| SEV-4 | Low impact | Next business day | Cosmetic issues |
-
-## Incident Response Process
-
-### 1. DETECT
-
-Incidents are detected via:
-- Automated alerts (PagerDuty)
-- Customer reports
-- Internal reports
-- Monitoring dashboards
-
-### 2. ACKNOWLEDGE
-
-Within SLA for severity level:
-1. Acknowledge page in PagerDuty
-2. Join #incidents Slack channel
-3. Claim incident: "I'm on this"
-
-### 3. ASSESS
-
-Determine:
-- Severity level (use definitions above)
-- Impact scope (all users? some users? one customer?)
-- Affected systems
-- Likely cause (recent deploy? infrastructure? external?)
-
-### 4. COMMUNICATE
-
-**For SEV-1/SEV-2:**
-- Post to #incidents with initial assessment
-- Update status page
-- Notify leadership (VP Eng, CTO)
-- Set up bridge call if needed
-
-**Template:**
-```
-🚨 INCIDENT: [Brief description]
-Severity: SEV-X
-Impact: [Who's affected]
-Status: Investigating
-IC: @[your name]
-```
-
-### 5. MITIGATE
-
-Focus on restoring service, not root cause:
-
-**Quick wins:**
-- Rollback recent deployment
-- Restart affected services
-- Scale up resources
-- Enable feature flags to disable broken features
-- Failover to backup systems
-
-**Document everything:**
-- What you tried
-- What worked/didn't work
-- Timeline of events
-
-### 6. RESOLVE
-
-When service is restored:
-1. Verify with monitoring
-2. Update status page: "Resolved"
-3. Send all-clear to #incidents
-4. Keep bridge call open for 15 min observation
-
-### 7. FOLLOW-UP
-
-**Within 48 hours for SEV-1/SEV-2:**
-- Schedule post-mortem
-- Create follow-up tickets
-- Update runbooks if needed
-
-## Escalation Paths
-
-| Need | Contact |
-|------|---------|
-| More engineers | Page backup on-call |
-| Database help | #data-eng |
-| Infrastructure | #platform-eng |
-| Security issue | #security (page immediately) |
-| Leadership | CTO: direct page for SEV-1 |
-
-## Useful Commands
-
-```bash
-# Check service status
-kubectl get pods -n production
-
-# View recent logs
-./scripts/tail-logs.sh production api
-
-# Check error rates
-./scripts/error-rates.sh --last 1h
-
-# Recent deployments
-./scripts/recent-deploys.sh
-```
-
-## Post-Mortem Template
-
-See: /engineering-docs/templates/post-mortem-template.md
-
-Key sections:
-1. Summary
-2. Timeline
-3. Impact
-4. Root cause
-5. What went well
-6. What went wrong
-7. Action items
-""",
-    "engineering-docs/architecture/system-overview.md": """# System Architecture Overview
-
-## High-Level Architecture
-
-```
-                    ┌─────────────────┐
-                    │   Load Balancer │
-                    │    (AWS ALB)    │
-                    └────────┬────────┘
-                             │
-                    ┌────────┴────────┐
-                    │   API Gateway   │
-                    │     (Kong)      │
-                    └────────┬────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-   ┌────┴────┐         ┌─────┴─────┐        ┌────┴────┐
-   │  User   │         │   Core    │        │ Search  │
-   │ Service │         │  Service  │        │ Service │
-   └────┬────┘         └─────┬─────┘        └────┬────┘
-        │                    │                    │
-   ┌────┴────┐         ┌─────┴─────┐        ┌────┴────┐
-   │PostgreSQL│        │ PostgreSQL │       │Elastic- │
-   │ (Users) │         │  (Core)   │        │ search  │
-   └─────────┘         └───────────┘        └─────────┘
-```
-
-## Core Services
-
-### API Gateway (Kong)
-- Routes requests to appropriate services
-- Handles authentication/authorization
-- Rate limiting and throttling
-- Request/response transformation
-
-### User Service
-- User authentication (OAuth, SSO, API keys)
-- User profiles and preferences
-- Team and organization management
-- Permission management (RBAC)
-
-### Core Service
-- Primary business logic
-- CRUD operations for core entities
-- Event emission for async processing
-- Integration with external services
-
-### Search Service
-- Full-text search across all entities
-- Powered by Elasticsearch
-- Real-time indexing via event consumers
-- Faceted search and filtering
-
-## Infrastructure
-
-### Compute
-- **Kubernetes (EKS)** — Container orchestration
-- **Node pools** — Separate pools for API, workers, and jobs
-- **Auto-scaling** — Based on CPU/memory and custom metrics
-
-### Data Stores
-- **PostgreSQL (RDS)** — Primary data store
-- **Redis (ElastiCache)** — Caching, sessions, rate limiting
-- **Elasticsearch** — Search and analytics
-- **S3** — File storage, backups, exports
-
-### Messaging
-- **SQS** — Task queues
-- **SNS** — Event broadcasting
-- **EventBridge** — Event routing
-
-### Observability
-- **DataDog** — Metrics, APM, logs
-- **PagerDuty** — Alerting and on-call
-- **Sentry** — Error tracking
-
-## Key Design Decisions
-
-### 1. Event-Driven Architecture
-Services communicate primarily via events:
-- Loose coupling between services
-- Easy to add new consumers
-- Built-in audit trail
-
-### 2. CQRS for Search
-Writes go to PostgreSQL, reads from Elasticsearch:
-- Optimized for read-heavy workloads
-- Near real-time search indexing
-- Flexible query capabilities
-
-### 3. Database Per Service
-Each service owns its database:
-- Clear ownership boundaries
-- Independent scaling
-- No cross-service joins (use events)
-
-### 4. Feature Flags
-All new features behind flags:
-- Gradual rollouts
-- Quick disable if issues
-- A/B testing capability
-
-## Security
-
-### Authentication
-- OAuth 2.0 / OIDC for user auth
-- API keys for service-to-service
-- JWT tokens with short expiry
-
-### Authorization
-- Role-based access control (RBAC)
-- Resource-level permissions
-- Audit logging for all actions
-
-### Data Protection
-- Encryption at rest (AES-256)
-- Encryption in transit (TLS 1.3)
-- PII handling per GDPR/CCPA
-
-## Disaster Recovery
-
-- **RPO:** 1 hour (point-in-time recovery)
-- **RTO:** 4 hours (full recovery)
-- **Multi-AZ:** All critical services
-- **Cross-region:** Daily backups to us-west-2
-
-## Further Reading
-
-- [API Design Guide](/engineering-docs/architecture/api-design.md)
-- [Database Schema](/engineering-docs/architecture/database-schema.md)
-- [Security Architecture](/engineering-docs/architecture/security.md)
-""",
-    "engineering-docs/architecture/api-design.md": """# API Design Guide
-
-## Overview
-This document describes our API design standards and conventions.
-
-## REST Principles
-
-### Resource Naming
-- Use plural nouns: `/users`, `/documents`, `/teams`
-- Use kebab-case for multi-word resources: `/user-preferences`
-- Nest resources logically: `/users/{id}/documents`
-
-### HTTP Methods
-| Method | Usage | Example |
-|--------|-------|---------|
-| GET | Read | `GET /users/123` |
-| POST | Create | `POST /users` |
-| PUT | Full update | `PUT /users/123` |
-| PATCH | Partial update | `PATCH /users/123` |
-| DELETE | Delete | `DELETE /users/123` |
-
-### Status Codes
-| Code | Usage |
-|------|-------|
-| 200 | Success |
-| 201 | Created |
-| 204 | No Content (DELETE) |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 422 | Validation Error |
-| 429 | Rate Limited |
-| 500 | Server Error |
-
-## Request/Response Format
-
-### Request Headers
-```
-Content-Type: application/json
-Authorization: Bearer <token>
-X-Request-ID: <uuid>
-```
-
-### Response Format
-```json
-{
-  "data": { ... },
-  "meta": {
-    "request_id": "uuid",
-    "timestamp": "ISO8601"
-  }
-}
-```
-
-### Error Format
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Human readable message",
-    "details": [
-      {"field": "email", "message": "Invalid format"}
-    ]
-  },
-  "meta": {
-    "request_id": "uuid"
-  }
-}
-```
-
-## Pagination
-
-### Request
-```
-GET /users?page=2&per_page=25
-```
-
-### Response
-```json
-{
-  "data": [...],
-  "meta": {
-    "page": 2,
-    "per_page": 25,
-    "total": 100,
-    "total_pages": 4
-  }
-}
-```
-
-## Filtering & Sorting
-
-### Filtering
-```
-GET /users?status=active&role=admin
-GET /users?created_after=2024-01-01
-```
-
-### Sorting
-```
-GET /users?sort=created_at&order=desc
-GET /users?sort=-created_at  # shorthand
-```
-
-## Rate Limiting
-
-- Default: 1000 requests/minute
-- Auth endpoints: 10 requests/minute
-- Headers returned:
-  - `X-RateLimit-Limit`
-  - `X-RateLimit-Remaining`
-  - `X-RateLimit-Reset`
-
-## Versioning
-
-- Version in URL: `/api/v1/users`
-- Major versions only
-- Deprecation: 6 months notice
-
-## Authentication
-
-See [Security Architecture](/engineering-docs/architecture/security.md) for details.
-""",
-    "engineering-docs/guides/testing-guide.md": """# Testing Guide
-
-## Overview
-This guide covers our testing practices and standards.
-
-## Test Pyramid
-
-```
-        ╱╲
-       ╱  ╲       E2E Tests (10%)
-      ╱────╲      - Critical user flows
-     ╱      ╲
-    ╱────────╲    Integration Tests (30%)
-   ╱          ╲   - API endpoints, database
-  ╱────────────╲
- ╱              ╲ Unit Tests (60%)
-╱________________╲- Functions, classes, modules
-```
-
-## Unit Tests
-
-### When to Write
-- Every new function/method
-- Bug fixes (test first!)
-- Complex business logic
-
-### Best Practices
-```python
-# Good: descriptive name, single assertion
-def test_user_can_be_created_with_valid_email():
-    user = User.create(email="test@example.com")
-    assert user.email == "test@example.com"
-
-# Bad: vague name, multiple unrelated assertions
-def test_user():
-    user = User.create(email="test@example.com")
-    assert user.email == "test@example.com"
-    assert user.is_active
-    assert user.created_at is not None
-```
-
-### Coverage Requirements
-- Minimum: 80% coverage
-- Critical paths: 100% coverage
-- New code: 90% coverage
-
-## Integration Tests
-
-### API Tests
-```python
-def test_create_user_endpoint():
-    response = client.post("/api/v1/users", json={
-        "email": "test@example.com",
-        "name": "Test User"
-    })
-    assert response.status_code == 201
-    assert response.json()["data"]["email"] == "test@example.com"
-```
-
-### Database Tests
-- Use test database
-- Rollback after each test
-- Use factories for test data
-
-## E2E Tests
-
-### When to Write
-- Critical user journeys
-- Cross-service workflows
-- Regression prevention
-
-### Tools
-- Playwright for UI
-- pytest for API
-- Custom fixtures for setup
-
-## Running Tests
-
-```bash
-# All tests
-pytest
-
-# Unit tests only
-pytest tests/unit/
-
-# With coverage
-pytest --cov=src --cov-report=html
-
-# Specific file
-pytest tests/test_users.py
-
-# Watch mode
-pytest-watch
-```
-
-## CI/CD Integration
-
-Tests run on every PR:
-1. Lint (ruff)
-2. Type check (mypy)
-3. Unit tests
-4. Integration tests
-5. E2E tests (main branch only)
-
-## Test Data
-
-### Factories
-```python
-class UserFactory:
-    @staticmethod
-    def create(**kwargs):
-        defaults = {
-            "email": f"user-{uuid4()}@test.com",
-            "name": "Test User"
-        }
-        return User.create(**{**defaults, **kwargs})
-```
-
-### Fixtures
-```python
-@pytest.fixture
-def authenticated_user():
-    user = UserFactory.create()
-    token = create_token(user)
-    return user, token
-```
-""",
-    "engineering-docs/rfcs/rfc-001-search-redesign.md": """# RFC-001: Search Redesign
-
-## Metadata
-- **Status:** Approved
-- **Author:** Sarah Chen
-- **Created:** 2024-05-01
-- **Updated:** 2024-05-20
-- **Decision:** Approved on 2024-05-20
-
-## Summary
-Redesign our search infrastructure to improve relevance and reduce latency.
-
-## Problem Statement
-Current search has several issues:
-1. Average latency is 500ms (target: <200ms)
-2. Relevance scores are inconsistent
-3. No support for typo tolerance
-4. Faceted search is slow
-
-## Proposed Solution
-
-### Architecture
-Replace current Elasticsearch setup with a tiered approach:
-1. **Hot tier:** Recent data (last 30 days) on SSD
-2. **Warm tier:** Older data on HDD
-3. **Cold tier:** Archive data in S3
-
-### Improvements
-1. Add typo tolerance using Elasticsearch fuzzy matching
-2. Implement query caching with Redis
-3. Add search analytics for relevance tuning
-4. Pre-compute facet counts nightly
-
-### Timeline
-- Week 1-2: Infrastructure setup
-- Week 3-4: Migration tooling
-- Week 5-6: Gradual rollout
-- Week 7-8: Monitoring and tuning
-
-## Alternatives Considered
-
-### Option A: Algolia
-- Pros: Managed, fast, great relevance
-- Cons: Expensive at scale, vendor lock-in
-
-### Option B: Typesense
-- Pros: Open source, fast
-- Cons: Less mature, smaller community
-
-### Option C: Elasticsearch optimization (chosen)
-- Pros: Keep existing expertise, no migration risk
-- Cons: More work, but better long-term control
-
-## Decision
-Approved Option C. The team has deep Elasticsearch expertise and the improvements are achievable within timeline.
-
-## Success Metrics
-- P50 latency < 100ms
-- P99 latency < 300ms
-- Relevance score (measured by CTR) +20%
-- Zero downtime during migration
-""",
-}
+from scout.connectors.s3_mock_data import MOCK_BUCKETS, MOCK_CONTENTS, MOCK_FILES
+
+# Optional boto3 import - only required for real S3 connections
+try:
+    import boto3
+    from botocore.exceptions import ClientError, NoCredentialsError
+
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
+    boto3 = None  # type: ignore
+    ClientError = Exception  # type: ignore
+    NoCredentialsError = Exception  # type: ignore
 
 
 class S3Connector(BaseConnector):
-    """S3 connector with mock data for development/testing."""
+    """S3 connector with support for real S3 buckets and mock data fallback.
 
-    def __init__(self, bucket: str | None = None):
+    Args:
+        bucket: Default bucket name to use
+        access_key: AWS access key ID (optional, uses env/IAM if not provided)
+        secret_key: AWS secret access key (optional, uses env/IAM if not provided)
+        region: AWS region (default: us-east-1)
+        use_mock: Force mock mode even if credentials are available
+    """
+
+    def __init__(
+        self,
+        bucket: str | None = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
+        region: str = "us-east-1",
+        use_mock: bool = False,
+    ):
         self._authenticated = False
         self._default_bucket = bucket
+        self._access_key = access_key
+        self._secret_key = secret_key
+        self._region = region
+        self._use_mock = use_mock
+        self._s3_client = None
+        self._s3_resource = None
+        self._mock_reason: str | None = None  # Why we're in mock mode
 
     @property
     def source_type(self) -> str:
@@ -1110,14 +58,101 @@ class S3Connector(BaseConnector):
     def source_name(self) -> str:
         return "S3"
 
+    @property
+    def is_mock_mode(self) -> bool:
+        """Check if connector is running in mock mode."""
+        return self._use_mock or not BOTO3_AVAILABLE or self._s3_client is None
+
+    @property
+    def connection_status(self) -> dict[str, Any]:
+        """Get detailed connection status for debugging."""
+        return {
+            "is_mock_mode": self.is_mock_mode,
+            "mock_reason": self._mock_reason,
+            "boto3_available": BOTO3_AVAILABLE,
+            "use_mock_forced": self._use_mock,
+            "authenticated": self._authenticated,
+            "has_client": self._s3_client is not None,
+            "region": self._region,
+            "has_explicit_credentials": bool(self._access_key and self._secret_key),
+        }
+
     def authenticate(self) -> bool:
-        """Simulate authentication (always succeeds in mock mode)."""
-        self._authenticated = True
-        return True
+        """Authenticate with S3 using provided credentials or environment/IAM."""
+        if self._use_mock:
+            self._mock_reason = "use_mock=True was set explicitly"
+            self._authenticated = True
+            return True
+
+        if not BOTO3_AVAILABLE:
+            self._mock_reason = "boto3 is not installed (pip install boto3)"
+            self._authenticated = True
+            return True
+
+        try:
+            # Build client kwargs
+            client_kwargs: dict[str, Any] = {"region_name": self._region}
+            if self._access_key and self._secret_key:
+                client_kwargs["aws_access_key_id"] = self._access_key
+                client_kwargs["aws_secret_access_key"] = self._secret_key
+
+            self._s3_client = boto3.client("s3", **client_kwargs)
+            self._s3_resource = boto3.resource("s3", **client_kwargs)
+
+            # Verify credentials by listing buckets
+            self._s3_client.list_buckets()
+            self._mock_reason = None  # Successfully connected to real S3
+            self._authenticated = True
+            return True
+
+        except NoCredentialsError:
+            # No credentials available, fall back to mock mode
+            self._s3_client = None
+            self._s3_resource = None
+            self._mock_reason = (
+                "No AWS credentials found. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY "
+                "environment variables, or pass access_key/secret_key to the constructor, "
+                "or configure IAM role credentials."
+            )
+            self._authenticated = True
+            return True
+
+        except ClientError as e:
+            # Invalid credentials or permissions
+            self._s3_client = None
+            self._s3_resource = None
+            self._authenticated = False
+            raise ValueError(f"S3 authentication failed: {e}")
 
     def list_buckets(self) -> list[dict[str, Any]]:
         """List available S3 buckets."""
-        return MOCK_BUCKETS
+        if self.is_mock_mode:
+            # Add a hint that we're using mock data
+            buckets = [dict(b) for b in MOCK_BUCKETS]  # Copy to avoid mutating
+            for b in buckets:
+                b["_mock"] = True
+            return buckets
+
+        try:
+            response = self._s3_client.list_buckets()
+            buckets = []
+            for bucket in response.get("Buckets", []):
+                # Get bucket region
+                try:
+                    location = self._s3_client.get_bucket_location(Bucket=bucket["Name"])
+                    region = location.get("LocationConstraint") or "us-east-1"
+                except ClientError:
+                    region = "unknown"
+
+                buckets.append({
+                    "name": bucket["Name"],
+                    "region": region,
+                    "created": bucket.get("CreationDate", "").isoformat() if bucket.get("CreationDate") else "",
+                })
+            return buckets
+
+        except ClientError as e:
+            raise ValueError(f"Failed to list buckets: {e}")
 
     def list_items(
         self,
@@ -1127,17 +162,28 @@ class S3Connector(BaseConnector):
     ) -> list[dict[str, Any]]:
         """List files in a bucket or prefix."""
         bucket = parent_id or self._default_bucket
+
         if not bucket:
             # List buckets if no bucket specified
-            return [{"id": b["name"], "name": b["name"], "type": "bucket"} for b in MOCK_BUCKETS]
+            buckets = self.list_buckets()
+            return [{"id": b["name"], "name": b["name"], "type": "bucket"} for b in buckets]
 
         # Parse bucket/prefix
         if "/" in bucket:
             bucket_name, prefix = bucket.split("/", 1)
+            if not prefix.endswith("/"):
+                prefix += "/"
         else:
             bucket_name = bucket
             prefix = ""
 
+        if self.is_mock_mode:
+            return self._list_items_mock(bucket_name, prefix, limit)
+
+        return self._list_items_real(bucket_name, prefix, limit)
+
+    def _list_items_mock(self, bucket_name: str, prefix: str, limit: int) -> list[dict[str, Any]]:
+        """List items from mock data."""
         files = MOCK_FILES.get(bucket_name, [])
 
         # Filter by prefix
@@ -1158,26 +204,80 @@ class S3Connector(BaseConnector):
                 dir_name = key.split("/")[0]
                 if dir_name not in seen_dirs:
                     seen_dirs.add(dir_name)
-                    items.append(
-                        {
-                            "id": f"{bucket_name}/{prefix}{dir_name}".rstrip("/"),
-                            "name": dir_name,
-                            "type": "directory",
-                        }
-                    )
+                    full_prefix = f"{prefix}{dir_name}/" if prefix else f"{dir_name}/"
+                    items.append({
+                        "id": f"{bucket_name}/{full_prefix}".rstrip("/"),
+                        "name": dir_name,
+                        "type": "directory",
+                        "prefix": full_prefix,
+                    })
             else:
                 # This is a file
-                items.append(
-                    {
-                        "id": f"s3://{bucket_name}/{f['key']}",
-                        "name": key,
-                        "type": "file",
-                        "size": f.get("size", 0),
-                        "modified": f.get("modified", ""),
-                    }
-                )
+                items.append({
+                    "id": f"s3://{bucket_name}/{f['key']}",
+                    "name": key,
+                    "type": "file",
+                    "key": f["key"],
+                    "size": f.get("size", 0),
+                    "modified": f.get("modified", ""),
+                })
 
         return items[:limit]
+
+    def _list_items_real(self, bucket_name: str, prefix: str, limit: int) -> list[dict[str, Any]]:
+        """List items from real S3 bucket."""
+        try:
+            items: list[dict[str, Any]] = []
+
+            # Use delimiter to get folder-like behavior
+            paginator = self._s3_client.get_paginator("list_objects_v2")
+            page_iterator = paginator.paginate(
+                Bucket=bucket_name,
+                Prefix=prefix,
+                Delimiter="/",
+                PaginationConfig={"MaxItems": limit},
+            )
+
+            for page in page_iterator:
+                # Add folders (common prefixes)
+                for prefix_info in page.get("CommonPrefixes", []):
+                    folder_prefix = prefix_info["Prefix"]
+                    folder_name = folder_prefix.rstrip("/").split("/")[-1]
+                    items.append({
+                        "id": f"{bucket_name}/{folder_prefix}".rstrip("/"),
+                        "name": folder_name,
+                        "type": "directory",
+                        "prefix": folder_prefix,
+                    })
+
+                # Add files
+                for obj in page.get("Contents", []):
+                    key = obj["Key"]
+                    # Skip if this is just the prefix itself (folder marker)
+                    if key == prefix:
+                        continue
+
+                    name = key.split("/")[-1]
+                    if not name:  # Skip folder markers
+                        continue
+
+                    items.append({
+                        "id": f"s3://{bucket_name}/{key}",
+                        "name": name,
+                        "type": "file",
+                        "key": key,
+                        "size": obj.get("Size", 0),
+                        "modified": obj.get("LastModified", "").isoformat() if obj.get("LastModified") else "",
+                        "etag": obj.get("ETag", "").strip('"'),
+                    })
+
+                if len(items) >= limit:
+                    break
+
+            return items[:limit]
+
+        except ClientError as e:
+            raise ValueError(f"Failed to list objects in {bucket_name}: {e}")
 
     def search(
         self,
@@ -1185,7 +285,21 @@ class S3Connector(BaseConnector):
         filters: dict[str, Any] | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
-        """Search for files matching the query (grep-like search in content)."""
+        """Search for files matching the query.
+
+        Note: S3 does not have native search. This performs:
+        - Mock mode: Searches filenames and mock content
+        - Real mode: Lists objects and filters by key name (prefix search)
+
+        For full-text search of file contents, consider using a search index.
+        """
+        if self.is_mock_mode:
+            return self._search_mock(query, filters, limit)
+
+        return self._search_real(query, filters, limit)
+
+    def _search_mock(self, query: str, filters: dict[str, Any] | None, limit: int) -> list[dict[str, Any]]:
+        """Search in mock data (filename and content)."""
         query_lower = query.lower()
         results: list[dict[str, Any]] = []
 
@@ -1202,16 +316,14 @@ class S3Connector(BaseConnector):
 
                 # Search in filename
                 if query_lower in file["key"].lower():
-                    results.append(
-                        {
-                            "id": f"s3://{file_key}",
-                            "bucket": bucket,
-                            "key": file["key"],
-                            "name": file["key"].split("/")[-1],
-                            "match_type": "filename",
-                            "modified": file.get("modified", ""),
-                        }
-                    )
+                    results.append({
+                        "id": f"s3://{file_key}",
+                        "bucket": bucket,
+                        "key": file["key"],
+                        "name": file["key"].split("/")[-1],
+                        "match_type": "filename",
+                        "modified": file.get("modified", ""),
+                    })
                     continue
 
                 # Search in content
@@ -1219,17 +331,63 @@ class S3Connector(BaseConnector):
                     content = MOCK_CONTENTS[content_key]
                     if query_lower in content.lower():
                         snippet = _extract_snippet_with_context(content, query)
-                        results.append(
-                            {
-                                "id": f"s3://{file_key}",
+                        results.append({
+                            "id": f"s3://{file_key}",
+                            "bucket": bucket,
+                            "key": file["key"],
+                            "name": file["key"].split("/")[-1],
+                            "match_type": "content",
+                            "snippet": snippet,
+                            "modified": file.get("modified", ""),
+                        })
+
+        return results[:limit]
+
+    def _search_real(self, query: str, filters: dict[str, Any] | None, limit: int) -> list[dict[str, Any]]:
+        """Search in real S3 by listing and filtering by key name.
+
+        Note: This is a basic filename search. S3 doesn't support content search.
+        """
+        query_lower = query.lower()
+        results: list[dict[str, Any]] = []
+
+        # Determine bucket to search
+        bucket_name = filters.get("bucket") if filters else self._default_bucket
+        if not bucket_name:
+            # Search all accessible buckets
+            buckets = self.list_buckets()
+            bucket_names = [b["name"] for b in buckets]
+        else:
+            bucket_names = [bucket_name]
+
+        for bucket in bucket_names:
+            try:
+                prefix = filters.get("prefix", "") if filters else ""
+                paginator = self._s3_client.get_paginator("list_objects_v2")
+
+                for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+                    for obj in page.get("Contents", []):
+                        key = obj["Key"]
+                        # Check if query matches the key
+                        if query_lower in key.lower():
+                            results.append({
+                                "id": f"s3://{bucket}/{key}",
                                 "bucket": bucket,
-                                "key": file["key"],
-                                "name": file["key"].split("/")[-1],
-                                "match_type": "content",
-                                "snippet": snippet,
-                                "modified": file.get("modified", ""),
-                            }
-                        )
+                                "key": key,
+                                "name": key.split("/")[-1],
+                                "match_type": "filename",
+                                "size": obj.get("Size", 0),
+                                "modified": obj.get("LastModified", "").isoformat()
+                                if obj.get("LastModified")
+                                else "",
+                            })
+
+                            if len(results) >= limit:
+                                return results
+
+            except ClientError:
+                # Skip buckets we can't access
+                continue
 
         return results[:limit]
 
@@ -1248,6 +406,14 @@ class S3Connector(BaseConnector):
             return {"error": f"Invalid S3 path: {item_id}"}
 
         bucket, key = parts
+
+        if self.is_mock_mode:
+            return self._read_mock(bucket, key, options)
+
+        return self._read_real(bucket, key, options)
+
+    def _read_mock(self, bucket: str, key: str, options: dict[str, Any] | None) -> dict[str, Any]:
+        """Read from mock content."""
         content_key = f"{bucket}/{key}"
 
         if content_key not in MOCK_CONTENTS:
@@ -1273,6 +439,51 @@ class S3Connector(BaseConnector):
             },
         }
 
+    def _read_real(self, bucket: str, key: str, options: dict[str, Any] | None) -> dict[str, Any]:
+        """Read from real S3 bucket."""
+        try:
+            response = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+            # Read content
+            content_bytes = response["Body"].read()
+
+            # Try to decode as text, fall back to base64 for binary
+            try:
+                content = content_bytes.decode("utf-8")
+                is_binary = False
+            except UnicodeDecodeError:
+                import base64
+
+                content = base64.b64encode(content_bytes).decode("ascii")
+                is_binary = True
+
+            # Handle pagination for large text files
+            if not is_binary and options and options.get("offset"):
+                lines = content.split("\n")
+                offset = options.get("offset", 0)
+                limit = options.get("limit", 100)
+                content = "\n".join(lines[offset : offset + limit])
+
+            return {
+                "id": f"s3://{bucket}/{key}",
+                "bucket": bucket,
+                "key": key,
+                "content": content,
+                "is_binary": is_binary,
+                "metadata": {
+                    "size": response.get("ContentLength", 0),
+                    "content_type": response.get("ContentType", ""),
+                    "modified": response.get("LastModified", "").isoformat() if response.get("LastModified") else "",
+                    "etag": response.get("ETag", "").strip('"'),
+                },
+            }
+
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            if error_code == "NoSuchKey":
+                return {"error": f"File not found: s3://{bucket}/{key}"}
+            return {"error": f"Failed to read s3://{bucket}/{key}: {e}"}
+
     def write(
         self,
         parent_id: str,
@@ -1280,20 +491,51 @@ class S3Connector(BaseConnector):
         content: str,
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Write a file to S3 (mock - doesn't persist)."""
+        """Write a file to S3."""
         # Parse bucket from parent_id
         if parent_id.startswith("s3://"):
             parent_id = parent_id[5:]
 
         bucket = parent_id.split("/")[0]
-        key = f"{parent_id.split('/', 1)[1]}/{title}" if "/" in parent_id else title
+        prefix = parent_id.split("/", 1)[1] if "/" in parent_id else ""
+        key = f"{prefix}/{title}".lstrip("/") if prefix else title
 
-        return {
-            "id": f"s3://{bucket}/{key}",
-            "bucket": bucket,
-            "key": key,
-            "message": "File written (mock mode - not persisted)",
-        }
+        if self.is_mock_mode:
+            return {
+                "id": f"s3://{bucket}/{key}",
+                "bucket": bucket,
+                "key": key,
+                "message": "File written (mock mode - not persisted)",
+            }
+
+        try:
+            # Determine content type
+            content_type = "text/plain"
+            if options and options.get("content_type"):
+                content_type = options["content_type"]
+            elif title.endswith(".json"):
+                content_type = "application/json"
+            elif title.endswith(".md"):
+                content_type = "text/markdown"
+            elif title.endswith(".html"):
+                content_type = "text/html"
+
+            self._s3_client.put_object(
+                Bucket=bucket,
+                Key=key,
+                Body=content.encode("utf-8"),
+                ContentType=content_type,
+            )
+
+            return {
+                "id": f"s3://{bucket}/{key}",
+                "bucket": bucket,
+                "key": key,
+                "message": "File written successfully",
+            }
+
+        except ClientError as e:
+            return {"error": f"Failed to write s3://{bucket}/{key}: {e}"}
 
     def update(
         self,
@@ -1301,11 +543,118 @@ class S3Connector(BaseConnector):
         content: str | None = None,
         properties: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Update a file in S3 (mock - doesn't persist)."""
-        return {
-            "id": item_id,
-            "message": "File updated (mock mode - not persisted)",
-        }
+        """Update a file in S3 (S3 doesn't support partial updates, so this replaces the file)."""
+        if self.is_mock_mode:
+            return {
+                "id": item_id,
+                "message": "File updated (mock mode - not persisted)",
+            }
+
+        if content is None:
+            return {"error": "Content is required for S3 update (S3 doesn't support metadata-only updates)"}
+
+        # Parse item_id
+        if item_id.startswith("s3://"):
+            item_id = item_id[5:]
+
+        parts = item_id.split("/", 1)
+        if len(parts) != 2:
+            return {"error": f"Invalid S3 path: {item_id}"}
+
+        bucket, key = parts
+
+        try:
+            content_type = properties.get("content_type", "text/plain") if properties else "text/plain"
+
+            self._s3_client.put_object(
+                Bucket=bucket,
+                Key=key,
+                Body=content.encode("utf-8"),
+                ContentType=content_type,
+            )
+
+            return {
+                "id": f"s3://{bucket}/{key}",
+                "bucket": bucket,
+                "key": key,
+                "message": "File updated successfully",
+            }
+
+        except ClientError as e:
+            return {"error": f"Failed to update s3://{bucket}/{key}: {e}"}
+
+    def delete(self, item_id: str) -> dict[str, Any]:
+        """Delete a file from S3."""
+        if self.is_mock_mode:
+            return {
+                "id": item_id,
+                "message": "File deleted (mock mode - not persisted)",
+            }
+
+        # Parse item_id
+        if item_id.startswith("s3://"):
+            item_id = item_id[5:]
+
+        parts = item_id.split("/", 1)
+        if len(parts) != 2:
+            return {"error": f"Invalid S3 path: {item_id}"}
+
+        bucket, key = parts
+
+        try:
+            self._s3_client.delete_object(Bucket=bucket, Key=key)
+            return {
+                "id": f"s3://{bucket}/{key}",
+                "message": "File deleted successfully",
+            }
+
+        except ClientError as e:
+            return {"error": f"Failed to delete s3://{bucket}/{key}: {e}"}
+
+    def get_presigned_url(
+        self,
+        item_id: str,
+        expiration: int = 3600,
+        operation: str = "get_object",
+    ) -> dict[str, Any]:
+        """Generate a presigned URL for direct access to an S3 object.
+
+        Args:
+            item_id: S3 path (s3://bucket/key)
+            expiration: URL expiration time in seconds (default: 1 hour)
+            operation: S3 operation ('get_object' or 'put_object')
+
+        Returns:
+            Dictionary with 'url' or 'error'
+        """
+        if self.is_mock_mode:
+            return {"error": "Presigned URLs not available in mock mode"}
+
+        # Parse item_id
+        if item_id.startswith("s3://"):
+            item_id = item_id[5:]
+
+        parts = item_id.split("/", 1)
+        if len(parts) != 2:
+            return {"error": f"Invalid S3 path: {item_id}"}
+
+        bucket, key = parts
+
+        try:
+            url = self._s3_client.generate_presigned_url(
+                operation,
+                Params={"Bucket": bucket, "Key": key},
+                ExpiresIn=expiration,
+            )
+            return {
+                "url": url,
+                "expires_in": expiration,
+                "bucket": bucket,
+                "key": key,
+            }
+
+        except ClientError as e:
+            return {"error": f"Failed to generate presigned URL: {e}"}
 
 
 def _get_file_modified(bucket: str, key: str) -> str:

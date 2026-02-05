@@ -22,13 +22,13 @@
     "No real-time collaboration (unlike Drive/Notion)"
   ],
   "common_locations": {
-    "policies": "company-docs/policies/",
-    "engineering_docs": "engineering-docs/",
-    "runbooks": "engineering-docs/runbooks/",
-    "architecture": "engineering-docs/architecture/",
-    "okrs": "company-docs/planning/",
-    "hr_docs": "company-docs/hr/",
-    "data_exports": "data-exports/reports/"
+    "category_routing": "knowledge-testing-docs/01_category_routing_guide.md",
+    "response_templates": "knowledge-testing-docs/02_response_templates.md",
+    "request_policies": "knowledge-testing-docs/03_policy_reference.md",
+    "department_contacts": "knowledge-testing-docs/04_department_contacts.md",
+    "scenario_playbook": "knowledge-testing-docs/05_scenario_playbook.md",
+    "supplier_reference": "knowledge-testing-docs/06_supplier_reference.md",
+    "missing_info_checklist": "knowledge-testing-docs/07_missing_info_checklist.md"
   },
   "search_tips": [
     "Search by exact terms - S3 search is grep-like",
@@ -38,19 +38,9 @@
   ],
   "buckets": [
     {
-      "name": "company-docs",
-      "description": "Company policies, HR docs, planning documents",
-      "contains": ["policies", "hr", "planning", "strategy"]
-    },
-    {
-      "name": "engineering-docs",
-      "description": "Technical docs, runbooks, architecture, RFCs",
-      "contains": ["runbooks", "architecture", "guides", "rfcs"]
-    },
-    {
-      "name": "data-exports",
-      "description": "Reports, metrics, data exports",
-      "contains": ["reports", "exports", "analytics"]
+      "name": "knowledge-testing-docs",
+      "description": "AI agent knowledge base for request handling: routing, templates, policies, scenarios",
+      "contains": ["category-routing", "response-templates", "policies", "department-contacts", "scenario-playbook", "supplier-reference", "missing-info-checklist"]
     }
   ]
 }

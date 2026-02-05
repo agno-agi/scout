@@ -54,7 +54,7 @@ fi
 
 echo -e "${BOLD}Initializing project...${NC}"
 echo ""
-railway init -n "dash"
+railway init -n "scout"
 
 echo ""
 echo -e "${BOLD}Deploying PgVector database...${NC}"
@@ -68,7 +68,7 @@ sleep 10
 echo ""
 echo -e "${BOLD}Creating application service...${NC}"
 echo ""
-railway add --service dash \
+railway add --service scout \
     --variables 'DB_USER=${{pgvector.PGUSER}}' \
     --variables 'DB_PASS=${{pgvector.PGPASSWORD}}' \
     --variables 'DB_HOST=${{pgvector.PGHOST}}' \
@@ -83,14 +83,14 @@ railway add --service dash \
 echo ""
 echo -e "${BOLD}Deploying application...${NC}"
 echo ""
-railway up --service dash -d
+railway up --service scout -d
 
 echo ""
 echo -e "${BOLD}Creating domain...${NC}"
 echo ""
-railway domain --service dash
+railway domain --service scout
 
 echo ""
 echo -e "${BOLD}Done.${NC} Domain may take ~5 minutes."
-echo -e "${DIM}Logs: railway logs --service dash${NC}"
+echo -e "${DIM}Logs: railway logs --service scout${NC}"
 echo ""
