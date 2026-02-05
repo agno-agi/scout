@@ -9,31 +9,42 @@ Run:
 """
 
 import sys
-print("=== Scout startup begin ===", flush=True)
+import os
+
+# Force unbuffered output
+os.environ["PYTHONUNBUFFERED"] = "1"
+
+def log(msg: str) -> None:
+    """Log to both stdout and stderr to ensure visibility."""
+    print(msg, flush=True)
+    print(msg, file=sys.stderr, flush=True)
+
+log("=== Scout startup begin ===")
+log(f"Python version: {sys.version}")
+log(f"Working directory: {os.getcwd()}")
 
 try:
-    from os import getenv
     from pathlib import Path
-    print("Step 1: Basic imports OK", flush=True)
+    log("Step 1: Basic imports OK")
 
     from agno.os import AgentOS
-    print("Step 2: AgentOS import OK", flush=True)
+    log("Step 2: AgentOS import OK")
 
     from db import get_postgres_db
-    print("Step 3: db import OK", flush=True)
+    log("Step 3: db import OK")
 
     from scout.agents import reasoning_scout, scout, scout_knowledge
-    print("Step 4: agents import OK", flush=True)
+    log("Step 4: agents import OK")
 
     from scout.teams import scout_team
-    print("Step 5: teams import OK", flush=True)
+    log("Step 5: teams import OK")
 
     # ============================================================================
     # Create AgentOS
     # ============================================================================
-    print("Step 6: Creating AgentOS...", flush=True)
+    log("Step 6: Creating AgentOS...")
     db = get_postgres_db()
-    print(f"Step 6a: Database connection: {db}", flush=True)
+    log(f"Step 6a: Database connection: {db}")
 
     agent_os = AgentOS(
         name="Scout",
@@ -44,29 +55,22 @@ try:
         knowledge=[scout_knowledge],
         config=str(Path(__file__).parent / "config.yaml"),
     )
-    print("Step 7: AgentOS created OK", flush=True)
+    log("Step 7: AgentOS created OK")
 
     app = agent_os.get_app()
-    print("Step 8: FastAPI app created OK", flush=True)
+    log("Step 8: FastAPI app created OK")
 
 except Exception as e:
-    print(f"=== STARTUP ERROR ===", flush=True)
-    print(f"Error type: {type(e).__name__}", flush=True)
-    print(f"Error message: {e}", flush=True)
+    log("=== STARTUP ERROR ===")
+    log(f"Error type: {type(e).__name__}")
+    log(f"Error message: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
-# if __name__ == "__main__":
-#     agent_os.serve(
-#         app="main:app",
-#         reload=getenv("RUNTIME_ENV", "prd") == "dev",
-#     )
-
 if __name__ == "__main__":
     import uvicorn
-    import os
-    port = int(os.environ.get("PORT", 8000))  # <-- Railway dynamically sets this
-    reload = os.environ.get("RUNTIME_ENV", "prd") == "dev"
-
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=reload)
+    port = int(os.environ.get("PORT", 8000))
+    log(f"Starting uvicorn on port {port}")
+    # Pass app object directly to avoid re-importing the module
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
