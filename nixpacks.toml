@@ -1,8 +1,4 @@
-[phases.setup]
-nixPkgs = ["python312"]
-
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
-
+# Let Nixpacks auto-detect Python from requirements.txt
+# Only override the start command
 [start]
 cmd = "python -m app.main"

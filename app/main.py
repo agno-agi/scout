@@ -74,3 +74,11 @@ if __name__ == "__main__":
     log(f"Starting uvicorn on port {port}")
     # Pass app object directly to avoid re-importing the module
     uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
+
+
+
+# if __name__ == "__main__":
+#     agent_os.serve(
+#         app="main:app",
+#         reload=getenv("RUNTIME_ENV", "prd") == "dev",
+#     )
