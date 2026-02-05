@@ -40,7 +40,7 @@ app = agent_os.get_app()
 
 if __name__ == "__main__":
     import uvicorn
-
+    import os
     port = int(os.environ.get("PORT", 8000))  # <-- Railway dynamically sets this
     reload = os.environ.get("RUNTIME_ENV", "prd") == "dev"
 
