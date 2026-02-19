@@ -24,6 +24,7 @@ agent_os = AgentOS(
     agents=[scout],
     tracing=True,
     scheduler=True,
+   scheduler_base_url=getenv("SCHEDULER_BASE_URL", "http://localhost:8000"),
     db=get_postgres_db(),
     config=str(Path(__file__).parent / "config.yaml"),
 )

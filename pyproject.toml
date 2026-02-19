@@ -19,6 +19,7 @@ dependencies = [
   "pgvector",
   "psycopg[binary]",
   "sqlalchemy",
+  "agno[scheduler]"
 ]
 
 [project.optional-dependencies]
