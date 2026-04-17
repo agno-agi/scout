@@ -64,15 +64,13 @@ base_tools: list = [
     MCPTools(url=f"https://mcp.exa.ai/mcp?exaApiKey={getenv('EXA_API_KEY', '')}&tools=web_search_exa"),
 ]
 
-# Slack as a knowledge source — search conversations, expand threads, inspect channels.
-# Gated on SLACK_TOKEN because SlackTools raises ValueError if the env var is missing.
+# Guard: SlackTools raises ValueError when SLACK_TOKEN is missing.
 SLACK_TOKEN = getenv("SLACK_TOKEN", "")
 if SLACK_TOKEN:
     from agno.tools.slack import SlackTools
 
     base_tools.append(
         SlackTools(
-            # Search + retrieve — Scout is a knowledge agent, not a posting bot.
             enable_send_message=False,
             enable_send_message_thread=False,
             enable_upload_file=False,

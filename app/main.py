@@ -16,33 +16,20 @@ from agno.os import AgentOS
 from db import get_postgres_db
 from scout.agent import scout
 
-# ---------------------------------------------------------------------------
-# Environment
-# ---------------------------------------------------------------------------
-runtime_env = getenv("RUNTIME_ENV", "prd")
-SLACK_TOKEN = getenv("SLACK_TOKEN", "")
-SLACK_SIGNING_SECRET = getenv("SLACK_SIGNING_SECRET", "")
-
-# ---------------------------------------------------------------------------
-# Interfaces
-# ---------------------------------------------------------------------------
 interfaces: list = []
-if SLACK_TOKEN and SLACK_SIGNING_SECRET:
+if (slack_token := getenv("SLACK_TOKEN")) and (slack_signing_secret := getenv("SLACK_SIGNING_SECRET")):
     from agno.os.interfaces.slack import Slack
 
     interfaces.append(
         Slack(
             agent=scout,
             streaming=True,
-            token=SLACK_TOKEN,
-            signing_secret=SLACK_SIGNING_SECRET,
+            token=slack_token,
+            signing_secret=slack_signing_secret,
             resolve_user_identity=True,
         )
     )
 
-# ---------------------------------------------------------------------------
-# Create AgentOS
-# ---------------------------------------------------------------------------
 agent_os = AgentOS(
     name="Scout",
     agents=[scout],
@@ -58,5 +45,5 @@ app = agent_os.get_app()
 if __name__ == "__main__":
     agent_os.serve(
         app="main:app",
-        reload=runtime_env == "dev",
+        reload=getenv("RUNTIME_ENV", "prd") == "dev",
     )
