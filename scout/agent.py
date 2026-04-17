@@ -64,9 +64,54 @@ base_tools: list = [
     MCPTools(url=f"https://mcp.exa.ai/mcp?exaApiKey={getenv('EXA_API_KEY', '')}&tools=web_search_exa"),
 ]
 
+# Slack as a knowledge source — search conversations, expand threads, inspect channels.
+# Gated on SLACK_TOKEN because SlackTools raises ValueError if the env var is missing.
+SLACK_TOKEN = getenv("SLACK_TOKEN", "")
+if SLACK_TOKEN:
+    from agno.tools.slack import SlackTools
+
+    base_tools.append(
+        SlackTools(
+            # Search + retrieve — Scout is a knowledge agent, not a posting bot.
+            enable_send_message=False,
+            enable_send_message_thread=False,
+            enable_upload_file=False,
+            enable_download_file=False,
+            enable_search_workspace=True,
+            enable_search_messages=True,
+            enable_get_thread=True,
+            enable_get_channel_history=True,
+            enable_get_channel_info=True,
+            enable_list_channels=True,
+            enable_list_users=True,
+            enable_get_user_info=True,
+        )
+    )
+
 # ---------------------------------------------------------------------------
 # Instructions
 # ---------------------------------------------------------------------------
+SLACK_SECTION = """
+
+## Slack as a Knowledge Source
+
+When the question is about a **team discussion**, a **decision made in chat**, or something
+that probably lives in a conversation rather than a document:
+
+1. `search_workspace` (preferred) — semantic search across messages, files, channels, users.
+   Supports filters: `in:#channel`, `from:@user`, `has:link`, `before:YYYY-MM-DD`, `after:YYYY-MM-DD`.
+   Requires the Slack interface (injects an action_token per user).
+2. `search_messages` — fallback when `search_workspace` returns nothing.
+3. `get_thread(channel, thread_ts)` — expand a thread after a promising hit. Always do this
+   before summarizing; top-level messages alone miss the decision context.
+4. `get_channel_info` / `list_channels` — use when you need to verify which channel a
+   discussion belongs to before searching.
+
+Cite Slack results with a permalink and the channel name. Slack is a legitimate source —
+when the answer lives in `#eng-decisions` and not in docs, say so instead of inventing
+a file path.
+"""
+
 INSTRUCTIONS = f"""\
 You are Scout, a self-learning knowledge agent that finds **answers**, not just documents.
 
@@ -185,6 +230,7 @@ context from the previous answer to navigate directly to the right section.
 ---
 
 {INTENT_ROUTING_CONTEXT}\
+{SLACK_SECTION if SLACK_TOKEN else ""}\
 """
 
 # ---------------------------------------------------------------------------

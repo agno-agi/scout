@@ -100,6 +100,7 @@ Not found? → Try fallback paths, save negative knowledge
 | `get_metadata` | scout/tools/awareness.py | Get file/directory metadata |
 | `save_intent_discovery` | scout/tools/save_discovery.py | Save findings to knowledge base |
 | `MCPTools` (Exa) | Optional (EXA_API_KEY) | Web search fallback |
+| `SlackTools` | Optional (SLACK_TOKEN) | Slack as a knowledge source — `search_workspace`, `get_thread`, `get_channel_history`, channel/user lookups |
 
 ## Key Files to Reference
 
@@ -122,6 +123,8 @@ Not found? → Try fallback paths, save negative knowledge
 | `DB_USER` | No | Database user (default: ai) |
 | `DB_PASS` | No | Database password (default: ai) |
 | `DB_DATABASE` | No | Database name (default: ai) |
+| `SLACK_TOKEN` | No | Slack bot token — enables SlackTools (search + retrieve) as a knowledge source |
+| `SLACK_SIGNING_SECRET` | No | Required alongside `SLACK_TOKEN` to mount the Slack AgentOS interface |
 
 ## Conventions
 

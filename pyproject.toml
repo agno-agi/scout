@@ -18,6 +18,7 @@ dependencies = [
   "opentelemetry-sdk",
   "pgvector",
   "psycopg[binary]",
+  "slack-sdk",
   "sqlalchemy",
 ]
 
@@ -46,7 +47,7 @@ plugins = ["pydantic.mypy"]
 exclude = [".venv*"]
 
 [[tool.mypy.overrides]]
-module = ["pgvector.*", "setuptools.*", "agno.*", "httpx.*", "mcp.*"]
+module = ["pgvector.*", "setuptools.*", "agno.*", "httpx.*", "mcp.*", "slack_sdk.*"]
 ignore_missing_imports = true
 
 [tool.uv.pip]
