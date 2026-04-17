@@ -77,9 +77,7 @@ if SLACK_TOKEN:
             enable_search_workspace=True,
             enable_search_messages=True,
             enable_get_thread=True,
-            enable_get_channel_history=True,
             enable_get_channel_info=True,
-            enable_list_channels=True,
             enable_list_users=True,
             enable_get_user_info=True,
         )
