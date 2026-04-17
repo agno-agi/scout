@@ -72,8 +72,6 @@ if SLACK_TOKEN:
         SlackTools(
             enable_send_message=False,
             enable_send_message_thread=False,
-            enable_upload_file=False,
-            enable_download_file=False,
             enable_search_workspace=True,
             enable_search_messages=True,
             enable_get_thread=True,
