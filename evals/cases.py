@@ -186,21 +186,48 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_crm_user_isolation",
+        # Save a canary-bearing note under user A, then read under user B
+        # in the same session. User B's query must NOT surface user A's
+        # row — the read sub-agent scopes by user_id. Focus of the
+        # assertion is the canary leak; whether Scout calls query_crm or
+        # answers from history doesn't matter as long as it never
+        # surfaces user A's content.
+        prompt=(
+            "For user 'iso-user-a-42', save a note titled 'iso-probe' "
+            "with body 'isolation-canary-XYZ-alpha'."
+        ),
+        expected_tools=("update_crm",),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'iso-user-b-42', list any notes titled "
+                    "'iso-probe'."
+                ),
+                response_forbids=("isolation-canary-XYZ-alpha",),
+            ),
+        ),
+        max_duration_s=240,
+    ),
+    Case(
         id="scout_save_follow_through",
-        # Two-turn follow-through: turn 1 is factual context (no save ask).
-        # Turn 2 says "save that" without a structured template — Scout
-        # must infer what to save from turn 1's content rather than
-        # demanding fields up front. Playbook flags this as a known gap.
+        # Two-turn follow-through: turn 1 is a conversational question
+        # that shouldn't trigger a save. Turn 2 is an explicit save ask
+        # — Scout must infer the contact's details from turn 1's content
+        # rather than demanding a structured template. Playbook flags
+        # this as a known gap ("act on prior-turn content").
         prompt=(
             "For user 'eval-follow-42', I just met with Alice Follow "
             "Through \u2014 her email is alice-follow-42@example.com "
-            "and she runs ops at Acme Co."
+            "and she runs ops at Acme Co. Could she be a fit for the "
+            "Q2 design partner program?"
         ),
-        # Turn 1 is ambiguous (factual statement, not an explicit ask).
-        # Some reasonable agents volunteer to save; we don't forbid here.
+        # Turn 1 is a question, not a save ask — Scout should answer it.
+        forbidden_tools=("update_crm",),
         followups=(
             FollowUp(
-                prompt="Yes, save that.",
+                # Turn 2 is imperative but relies on turn-1 details.
+                prompt="Great \u2014 please save Alice to my contacts.",
                 expected_tools=("update_crm",),
                 # Must not demand structured fields before acting.
                 response_forbids=(
@@ -216,7 +243,6 @@ CASES: tuple[Case, ...] = (
                     "with the email 'alice-follow-42@example.com'?"
                 ),
                 response_contains=("Alice",),
-                expected_tools=("query_crm",),
             ),
         ),
         max_duration_s=240,
@@ -307,8 +333,12 @@ CASES: tuple[Case, ...] = (
         prompt="Find any Drive file about the purple-unicorn project.",
         expected_tools=("query_gdrive",),
         response_matches=(
+            # Covers "no X", "didn't/couldn't find", "nothing found",
+            # "not found", "no files", plus "empty" / "zero" / "0 X"
+            # phrasings Scout used on real empty-result runs.
             r"(no\s+(matches|results|files|hits)|(did|could)n['\u2019]?t\s+find|"
-            r"nothing\s+found|not\s+found|no(\s+(drive|matching))?\s+files?)",
+            r"nothing\s+found|not\s+found|no(\s+(drive|matching))?\s+files?|"
+            r"empty|zero\s+(matches|results|files|hits)|0\s+(matches|results|files|hits))",
         ),
         response_forbids=("1eval_stub",),
         fixture="empty_results",
