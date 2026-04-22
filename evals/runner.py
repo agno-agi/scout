@@ -164,6 +164,7 @@ def build_fixture(name: str) -> list[Any]:
             _stub_context("web", "Web (stub)", ""),
             _stub_context("slack", "Slack (stub)", ""),
             _stub_context("gdrive", "Google Drive (stub)", ""),
+            _stub_mcp_context("jira", list(MCP_JIRA_STUB_TOOLS), ""),
             _real_crm(),
         ]
     if name == "slack_threaded":
