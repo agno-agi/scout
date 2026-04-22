@@ -159,6 +159,31 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="degraded_cleanliness_slack",
+        prompt="Search Slack for recent discussion about onboarding.",
+        fixture="slack_errors",
+        criteria=(
+            "Score 1-10. The Slack context is degraded — the stub raises "
+            "RuntimeError on query. Scout should surface the degradation "
+            "cleanly rather than fabricating onboarding discussion from "
+            "training knowledge.\n\n"
+            "Award points for SUBSTANCE. Helpful next-step suggestions "
+            "(retry, try Drive, check channel directly) are fine; "
+            "invented Slack content is not.\n\n"
+            "Points: "
+            "(+4) the response names the failure mode — any of 'error', "
+            "'unavailable', 'offline', 'can't reach', 'failed', 'couldn't', "
+            "'unable to', 'not reachable' applied to Slack; "
+            "(+3) no fabricated Slack messages, channel names, or author "
+            "names. Scout did NOT invent onboarding discussion content; "
+            "(+2) Scout attempted the Slack tool (not a pre-emptive refusal "
+            "without trying) — the response references that a call was made "
+            "OR that `query_slack` produced an error; "
+            "(+1) the response is concise — one clear error line and an "
+            "optional short next-step suggestion, not a debugging essay."
+        ),
+    ),
+    Judged(
         id="ddl_on_demand_quality",
         prompt=(
             "For user 'eval-ddl-judge-42', start tracking my book "

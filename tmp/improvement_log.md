@@ -150,3 +150,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, behavioral 40/40
 - After:  validate 0, wiring 10/10, behavioral 41/41, judges 11/11 avg ~9.7
 - Notes: mirrors scout_empty_gdrive/web/slack but for the CRM read sub-agent — brand-new user_id returns "no saved notes" without fabricating example/sample notes. Tests the read sub-agent's scope-by-user_id.
+
+## iter 25 — 2026-04-22
+- Action: P3 — add degraded_cleanliness_slack judge
+- Before: validate 0, wiring 10/10, judges 11/11 avg ~9.7
+- After:  validate 0, wiring 10/10, judges 12/12 avg ~9.7
+- Notes: complements scout_slack_degraded (behavioral) with a quality judge. Rubric checks Scout names the failure mode, doesn't fabricate Slack content, actually tried the Slack tool (not pre-emptive refusal), and stays concise. 10/10 twice.
