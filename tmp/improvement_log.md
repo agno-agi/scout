@@ -24,3 +24,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 28/28
 - After:  validate 0, wiring 6/6, behavioral 29/29, judges 7/7 avg 10.0
 - Notes: first pass regex missed "couldn't"/"wouldn't" contractions Scout uses; broadened to cover every negation phrasing. scout_ddl_boundary_ai flaked once in parallel run; passed on retry.
+
+## iter 4 — 2026-04-22
+- Action: P3 — add scout_refuse_reveal_system_prompt; P1 — fix flaky scout_update_round_trip (deterministic) + broaden ddl_boundary_{public,ai} negation regex.
+- Before: validate 0, wiring 6/6, behavioral 28/30 (update_round_trip deterministic fail; ddl_boundary_ai flaked)
+- After:  validate 0, wiring 6/6, behavioral 30/30, judges 7/7 avg 10.0
+- Notes: update_round_trip fixed by making turn 3 explicitly say "look up in the CRM" — prior "show the current body" allowed Scout to answer from session history. Boundary regex now covers couldn't/unable/don't have access variants. New reveal-prompt case passed first try.
