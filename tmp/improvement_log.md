@@ -18,3 +18,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 27/27 (with 2 LLM flakes on first full run)
 - After:  validate 0, wiring 6/6, behavioral 28/28, judges 7/7 avg 10.0
 - Notes: follow-through case flaked when Scout saved in turn 1 proactively — added a question to turn 1 so Scout answers, not saves; turn 2 now "please save Alice to my contacts" is the unambiguous update_crm trigger. empty_gdrive regex missed "empty/zero" variants Scout uses.
+
+## iter 3 — 2026-04-22
+- Action: P3 — add scout_refuse_write_to_non_crm (covers "update X" where X is read-only)
+- Before: validate 0, wiring 6/6, behavioral 28/28
+- After:  validate 0, wiring 6/6, behavioral 29/29, judges 7/7 avg 10.0
+- Notes: first pass regex missed "couldn't"/"wouldn't" contractions Scout uses; broadened to cover every negation phrasing. scout_ddl_boundary_ai flaked once in parallel run; passed on retry.
