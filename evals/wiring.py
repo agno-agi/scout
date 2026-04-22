@@ -11,6 +11,7 @@ Checks:
     W8  Slack provider's SlackTools has send/upload/download disabled.
     W9  Every registered provider has a sanitized, unique id + tool name.
     W10 FS provider's FileTools has save/delete/replace disabled.
+    W11 Scout agent has `add_history_to_context=True` + `num_history_runs>=2`.
 
 Each check is a function that returns None on PASS and raises
 ``AssertionError`` on FAIL. Zero LLM, zero network — runs in under a second.
@@ -248,6 +249,30 @@ def w8_slack_provider_tools_are_read_only() -> None:
         )
 
 
+def w11_scout_agent_has_history_enabled() -> None:
+    """Scout must have session history enabled for multi-turn to work.
+
+    `scout_multi_turn_recall`, `scout_multi_turn_fact_recall`, and the
+    save-then-recall CRM cases all rely on agno's `add_history_to_context`
+    feeding prior turns into the next one. If this flag flips off, every
+    multi-turn case quietly regresses without a compile error — this
+    check catches that.
+    """
+    from scout.agent import scout
+
+    if not getattr(scout, "add_history_to_context", False):
+        raise AssertionError(
+            "Scout agent must have add_history_to_context=True; "
+            "multi-turn cases depend on it. See scout/agent.py."
+        )
+    num_runs = getattr(scout, "num_history_runs", 0)
+    if not isinstance(num_runs, int) or num_runs < 2:
+        raise AssertionError(
+            f"Scout agent num_history_runs={num_runs!r}; expected int >= 2 "
+            "so at least the previous turn is visible."
+        )
+
+
 def w10_fs_provider_tools_are_read_only() -> None:
     """The Filesystem provider's FileTools disables save/delete/replace.
 
@@ -412,6 +437,7 @@ CHECKS = (
     w8_slack_provider_tools_are_read_only,
     w9_provider_ids_are_sanitized_and_unique,
     w10_fs_provider_tools_are_read_only,
+    w11_scout_agent_has_history_enabled,
 )
 
 

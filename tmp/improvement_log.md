@@ -174,3 +174,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, judges 13/13 avg ~9.7
 - After:  validate 0, wiring 10/10, judges 14/14 avg ~9.7
 - Notes: completes the degraded-cleanliness trio (web, slack, gdrive). Gdrive-specific rubric penalizes leaking the default fixture's 'Q4 Roadmap 2026' canary or the 1eval_stub URL when the degraded fixture returns no data.
+
+## iter 29 — 2026-04-22
+- Action: P3 — add W11 wiring (Scout agent has session memory enabled)
+- Before: validate 0, wiring 10/10
+- After:  validate 0, wiring 11/11
+- Notes: every multi-turn case depends on add_history_to_context=True + num_history_runs>=2. Without an invariant, a refactor could flip these off and every multi-turn case would silently re-fail in LLM-noise-only mode.
