@@ -203,7 +203,12 @@ CASES: tuple[Case, ...] = (
         ),
         followups=(
             FollowUp(
-                prompt=("For user 'eval-nat-42', list my notes about the quarterly review."),
+                # Force body display — "list titles" risks a response
+                # that omits the date, making the assertion flaky.
+                prompt=(
+                    "For user 'eval-nat-42', show the full body of my "
+                    "notes about the quarterly review."
+                ),
                 response_contains=("2026-05-15",),
                 expected_tools=("query_crm",),
             ),
@@ -408,6 +413,28 @@ CASES: tuple[Case, ...] = (
     # -----------------------------------------------------------------------
     # Empty-result handling
     # -----------------------------------------------------------------------
+    Case(
+        id="scout_empty_web",
+        prompt="Search the web for references to the Widget Foundry 2026 conference.",
+        expected_tools=("query_web",),
+        response_matches=(
+            r"(no\s+(matches|results|hits|info)|(did|could)n['\u2019]?t\s+find|"
+            r"nothing\s+found|not\s+found|empty|no\s+(result|information))",
+        ),
+        fixture="empty_results",
+        max_duration_s=120,
+    ),
+    Case(
+        id="scout_empty_slack",
+        prompt="Search Slack for recent discussion about the Rhubarb initiative.",
+        expected_tools=("slack",),
+        response_matches=(
+            r"(no\s+(matches|results|hits|info|messages)|(did|could)n['\u2019]?t\s+find|"
+            r"nothing\s+found|not\s+found|empty|no\s+(result|information|discussion))",
+        ),
+        fixture="empty_results",
+        max_duration_s=120,
+    ),
     Case(
         id="scout_empty_gdrive",
         prompt="Find any Drive file about the purple-unicorn project.",

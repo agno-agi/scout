@@ -36,3 +36,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 30/30
 - After:  validate 0, wiring 6/6, behavioral 31/31, judges 7/7 avg 10.0
 - Notes: passed first full run. turn-2 asserts 2026-05-15 date is in the list-back — confirms the date from turn-1 body actually made it to storage.
+
+## iter 6 — 2026-04-22
+- Action: P3 — add scout_empty_web + scout_empty_slack; P4 — tighten scout_crm_natural_save_note turn-2 prompt
+- Before: validate 0, wiring 6/6, behavioral 32/33 (natural_save_note flaked on turn-2 listing, didn't include body)
+- After:  validate 0, wiring 6/6, behavioral 33/33, judges 7/7 avg 10.0
+- Notes: listing "my notes about X" sometimes omitted body from response; changed to "show the full body of my notes about X" to force body surface.
