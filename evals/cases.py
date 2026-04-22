@@ -186,6 +186,42 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_save_follow_through",
+        # Two-turn follow-through: turn 1 is factual context (no save ask).
+        # Turn 2 says "save that" without a structured template — Scout
+        # must infer what to save from turn 1's content rather than
+        # demanding fields up front. Playbook flags this as a known gap.
+        prompt=(
+            "For user 'eval-follow-42', I just met with Alice Follow "
+            "Through \u2014 her email is alice-follow-42@example.com "
+            "and she runs ops at Acme Co."
+        ),
+        # Turn 1 is ambiguous (factual statement, not an explicit ask).
+        # Some reasonable agents volunteer to save; we don't forbid here.
+        followups=(
+            FollowUp(
+                prompt="Yes, save that.",
+                expected_tools=("update_crm",),
+                # Must not demand structured fields before acting.
+                response_forbids=(
+                    "what fields",
+                    "please provide",
+                    "which columns",
+                    "fill in the template",
+                ),
+            ),
+            FollowUp(
+                prompt=(
+                    "For user 'eval-follow-42', do I have any contacts "
+                    "with the email 'alice-follow-42@example.com'?"
+                ),
+                response_contains=("Alice",),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=240,
+    ),
+    Case(
         id="scout_update_round_trip",
         # Save → update → read back. The only current coverage is INSERT
         # round-trips (scout_save_note, scout_recall_contact); this closes
