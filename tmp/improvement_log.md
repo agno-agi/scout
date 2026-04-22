@@ -30,3 +30,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 28/30 (update_round_trip deterministic fail; ddl_boundary_ai flaked)
 - After:  validate 0, wiring 6/6, behavioral 30/30, judges 7/7 avg 10.0
 - Notes: update_round_trip fixed by making turn 3 explicitly say "look up in the CRM" — prior "show the current body" allowed Scout to answer from session history. Boundary regex now covers couldn't/unable/don't have access variants. New reveal-prompt case passed first try.
+
+## iter 5 — 2026-04-22
+- Action: P3 — add scout_crm_natural_save_note (colloquial "save a quick note: ..." save intent)
+- Before: validate 0, wiring 6/6, behavioral 30/30
+- After:  validate 0, wiring 6/6, behavioral 31/31, judges 7/7 avg 10.0
+- Notes: passed first full run. turn-2 asserts 2026-05-15 date is in the list-back — confirms the date from turn-1 body actually made it to storage.
