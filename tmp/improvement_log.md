@@ -48,3 +48,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 33/33
 - After:  validate 0, wiring 6/6, behavioral 34/34, judges 7/7 avg 10.0
 - Notes: exercised the tags TEXT[] column + WHERE 'alpha' = ANY(tags) style filter. Passed first run.
+
+## iter 8 — 2026-04-22
+- Action: P3 — add scout_crm_dedup_contact_email (email-based UPDATE vs duplicate INSERT)
+- Before: validate 0, wiring 6/6, behavioral 34/34
+- After:  validate 0, wiring 6/6, behavioral 35/35, judges 7/7 avg 10.0
+- Notes: regex `\b(1|one)\s+` failed because Scout renders "**1**" with Markdown — replaced `\s+` with `\W{0,3}` so the count assertion tolerates bold wrappers. CRM writer correctly dedupped (same id on both saves).

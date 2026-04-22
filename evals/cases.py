@@ -186,6 +186,43 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_crm_dedup_contact_email",
+        # CRM write instructions tell the sub-agent to UPDATE rather
+        # than INSERT when a contact with the same primary email already
+        # exists for the user. Save twice, then ask for the count — one
+        # record should exist, not two.
+        prompt=(
+            "For user 'dedup-42', save a new contact: name 'Alice "
+            "Dedup', email 'alice-dedup@example.com', tag 'initial'."
+        ),
+        expected_tools=("update_crm",),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'dedup-42', save a new contact: name "
+                    "'Alice Dedup', email 'alice-dedup@example.com', "
+                    "tag 'followup'."
+                ),
+                expected_tools=("update_crm",),
+            ),
+            FollowUp(
+                prompt=(
+                    "For user 'dedup-42', how many contact records do I "
+                    "have with email 'alice-dedup@example.com'?"
+                ),
+                # Dedup succeeded = 1 row. "2 contacts" = double-INSERT.
+                # `\W{0,3}` tolerates Markdown wrappers like "**1**" that
+                # Scout renders around the count.
+                response_matches=(
+                    r"\b(1|one)\b\W{0,3}(contact|record|match|row|entry)",
+                ),
+                response_forbids=("2 contacts", "two contacts", "2 records", "two records"),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=300,
+    ),
+    Case(
         id="scout_crm_tag_filter",
         # Save two notes under one user with distinct tags, then list
         # filtered by the first tag — only the first note should appear.
