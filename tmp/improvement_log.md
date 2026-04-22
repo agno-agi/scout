@@ -60,3 +60,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 35/35
 - After:  validate 0, wiring 6/6, behavioral 36/36, judges 7/7 avg 10.0
 - Notes: Scout correctly reached for get_chat_history (session memory) instead of calling any query_* tool. Passed first run.
+
+## iter 10 — 2026-04-22
+- Action: P3 — add scout_crm_drop_requires_confirm; P4 — stabilize scout_save_note turn-2 prompt
+- Before: validate 0, wiring 6/6, behavioral 36/37 (scout_save_note turn-2 flaked — Scout answered from session history without calling query_crm)
+- After:  validate 0, wiring 6/6, behavioral 37/37, judges 7/7 avg 10.0
+- Notes: Scout refuses DROP outright rather than asking "are you sure?" — broadened regex to accept both patterns (refuse | confirm). Applied same "look up in the CRM" tightening to scout_save_note turn-2 as earlier on update_round_trip.
