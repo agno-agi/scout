@@ -7,6 +7,7 @@ Checks:
     W4  Every registered `ContextProvider` has the expected shape.
     W5  GDrive provider uses `ScoutGoogleDriveTools`, not bare `GoogleDriveTools`.
     W6  `MCPContextProvider` implements the lifecycle interface cleanly.
+    W7  Readonly engine rejects writes at the DB level (belt for `default_transaction_read_only`).
 
 Each check is a function that returns None on PASS and raises
 ``AssertionError`` on FAIL. Zero LLM, zero network — runs in under a second.
@@ -220,6 +221,44 @@ def w5_gdrive_uses_scout_subclass() -> None:
         )
 
 
+def w7_readonly_engine_blocks_writes() -> None:
+    """The readonly engine rejects any INSERT/UPDATE/DELETE/CREATE/DROP at the DB level.
+
+    Uses PostgreSQL's ``default_transaction_read_only=on``. If a future
+    refactor drops the readonly flag or hands the CRM read sub-agent the
+    write engine, this check flips red immediately — regardless of how
+    the read sub-agent is prompted.
+    """
+    from sqlalchemy import text
+    from sqlalchemy.exc import InternalError, ProgrammingError
+
+    from db import get_readonly_engine
+
+    engine = get_readonly_engine()
+    bad_statements = [
+        "CREATE TABLE scout.w7_probe (id int)",
+        "INSERT INTO scout.scout_notes (user_id, title, body) VALUES ('w7', 't', 'b')",
+        "UPDATE scout.scout_notes SET title='hacked' WHERE user_id='w7-nobody'",
+        "DELETE FROM scout.scout_notes WHERE user_id='w7-nobody'",
+        "DROP TABLE scout.scout_notes",
+    ]
+    for stmt in bad_statements:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(stmt))
+        except (InternalError, ProgrammingError) as exc:
+            msg = str(exc).lower()
+            if "read-only" not in msg and "read only" not in msg:
+                raise AssertionError(f"Unexpected error text for {stmt!r}: {exc}") from exc
+            continue
+        except Exception as exc:
+            raise AssertionError(
+                f"Readonly engine didn't reject {stmt!r}; got {type(exc).__name__}: {exc}"
+            ) from exc
+        else:
+            raise AssertionError(f"Readonly engine let through: {stmt!r}")
+
+
 def w6_mcp_provider_lifecycle() -> None:
     """`MCPContextProvider` implements the lifecycle interface cleanly.
 
@@ -282,6 +321,7 @@ CHECKS = (
     w4_context_protocol_shape,
     w5_gdrive_uses_scout_subclass,
     w6_mcp_provider_lifecycle,
+    w7_readonly_engine_blocks_writes,
 )
 
 
