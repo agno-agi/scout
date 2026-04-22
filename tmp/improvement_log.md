@@ -42,3 +42,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 32/33 (natural_save_note flaked on turn-2 listing, didn't include body)
 - After:  validate 0, wiring 6/6, behavioral 33/33, judges 7/7 avg 10.0
 - Notes: listing "my notes about X" sometimes omitted body from response; changed to "show the full body of my notes about X" to force body surface.
+
+## iter 7 — 2026-04-22
+- Action: P3 — add scout_crm_tag_filter (three-turn: save alpha, save beta, list-by-tag filters)
+- Before: validate 0, wiring 6/6, behavioral 33/33
+- After:  validate 0, wiring 6/6, behavioral 34/34, judges 7/7 avg 10.0
+- Notes: exercised the tags TEXT[] column + WHERE 'alpha' = ANY(tags) style filter. Passed first run.

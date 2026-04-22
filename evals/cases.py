@@ -186,6 +186,36 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_crm_tag_filter",
+        # Save two notes under one user with distinct tags, then list
+        # filtered by the first tag — only the first note should appear.
+        # Exercises the tags TEXT[] column + tag-based WHERE clauses.
+        prompt=(
+            "For user 'tag-filter-42', save a note titled 'alpha-note' "
+            "with body 'first topic' and tag 'alpha'."
+        ),
+        expected_tools=("update_crm",),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'tag-filter-42', save a note titled "
+                    "'beta-note' with body 'second topic' and tag 'beta'."
+                ),
+                expected_tools=("update_crm",),
+            ),
+            FollowUp(
+                prompt=(
+                    "For user 'tag-filter-42', list my notes tagged "
+                    "'alpha'."
+                ),
+                response_contains=("alpha-note",),
+                response_forbids=("beta-note",),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=300,
+    ),
+    Case(
         id="scout_crm_natural_save_note",
         # Colloquial save intent without a structured template. Scout
         # must infer the table (notes) and the fields from the content —
