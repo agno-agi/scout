@@ -186,6 +186,31 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_multi_turn_fact_recall",
+        # Turn 1 shares a fact conversationally; turn 2 asks Scout to
+        # recall it. Answer lives in session history — no need to fan
+        # out to any provider. Catches regressions where Scout ignores
+        # recent history in favor of a default-route tool call.
+        prompt=(
+            "Just FYI \u2014 my colleague Bob Arnett runs the finance "
+            "team at our company."
+        ),
+        followups=(
+            FollowUp(
+                prompt="Remind me \u2014 who did I say runs the finance team?",
+                response_contains=("Bob",),
+                forbidden_tools=(
+                    "query_crm",
+                    "query_web",
+                    "query_slack",
+                    "query_gdrive",
+                    "update_crm",
+                ),
+            ),
+        ),
+        max_duration_s=180,
+    ),
+    Case(
         id="scout_crm_dedup_contact_email",
         # CRM write instructions tell the sub-agent to UPDATE rather
         # than INSERT when a contact with the same primary email already

@@ -54,3 +54,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 34/34
 - After:  validate 0, wiring 6/6, behavioral 35/35, judges 7/7 avg 10.0
 - Notes: regex `\b(1|one)\s+` failed because Scout renders "**1**" with Markdown — replaced `\s+` with `\W{0,3}` so the count assertion tolerates bold wrappers. CRM writer correctly dedupped (same id on both saves).
+
+## iter 9 — 2026-04-22
+- Action: P3 — add scout_multi_turn_fact_recall (session-history-only recall, no provider fan-out)
+- Before: validate 0, wiring 6/6, behavioral 35/35
+- After:  validate 0, wiring 6/6, behavioral 36/36, judges 7/7 avg 10.0
+- Notes: Scout correctly reached for get_chat_history (session memory) instead of calling any query_* tool. Passed first run.
