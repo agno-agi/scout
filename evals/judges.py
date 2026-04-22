@@ -159,6 +159,33 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="ddl_on_demand_quality",
+        prompt=(
+            "For user 'eval-ddl-judge-42', start tracking my book "
+            "recommendations. First one: 'The Peripheral' by William "
+            "Gibson, rating 9/10."
+        ),
+        criteria=(
+            "Score 1-10. The CRM write sub-agent creates new scout_* "
+            "tables on demand with standard columns (id, user_id, "
+            "created_at) plus the domain fields. The user asked to "
+            "start a 'book recommendations' track — Scout should "
+            "CREATE a scout_book_* table and INSERT the first row.\n\n"
+            "Award points for what the USER sees: a crisp confirmation "
+            "with the fields they supplied. Mentioning the underlying "
+            "SQL/schema is nice-to-have, not required.\n\n"
+            "Points: "
+            "(+4) the response confirms the save ('saved', 'stored', "
+            "'added', 'tracked', 'recorded', 'logged' — any phrasing); "
+            "(+3) the title ('The Peripheral') appears in the response; "
+            "(+2) the author (William Gibson or just Gibson) AND the "
+            "rating (9 / 9/10 / nine) BOTH appear in the response — "
+            "proves the row reflects the user's input; "
+            "(+1) the response is concise — a confirmation + a short "
+            "summary, not a multi-section tour or capability menu."
+        ),
+    ),
+    Judged(
         id="scout_concise_write_ack",
         prompt=(
             "For user 'eval-user-42', save a note titled 'ship status' with body 'API release slipping to next week'."

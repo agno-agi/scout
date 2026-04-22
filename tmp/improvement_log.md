@@ -90,3 +90,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 35/37 (recall_contact flaked on "list tagged" turn-2; dedup failed because DB state persists across runs)
 - After:  validate 0, wiring 6/6, behavioral 36/36, judges 10/10 avg ~9.6
 - Notes: added forbidden_tools={query_web, query_crm, query_gdrive, query_slack, query_fs, query_mcp_jira} minus the intended provider to scout_web_query / scout_slack_search / scout_gdrive_search. Applied the "look up in the CRM" tighten to recall_contact turn-2. Archived dedup case with a note — needs per-run user_id to be stable, which requires runner changes.
+
+## iter 15 — 2026-04-22
+- Action: P3 — add ddl_on_demand_quality judge
+- Before: validate 0, wiring 6/6, judges 10/10
+- After:  validate 0, wiring 6/6, judges 11/11 avg ~9.7
+- Notes: first rubric scored 2 and 6 — too demanding (required mention of "new table created" and scout schema). Pivoted to user-centric: confirm + echo fields. Scout's short acks scored 10/10 three runs in a row.
