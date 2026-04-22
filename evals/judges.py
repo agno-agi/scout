@@ -60,6 +60,37 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="identity_recall",
+        prompt=(
+            "Who are you? What can you help me with, and what do you "
+            "remember about me?"
+        ),
+        criteria=(
+            "Score 1-10. Scout is a single context agent with access to "
+            "Web, Slack, Drive, CRM (the user's contacts/projects/notes), "
+            "and an MCP-wrapped Jira source (under the default fixture). "
+            "It has no persistent memory outside session history + the "
+            "CRM. The user_id is 'default'; Scout has no prior CRM data "
+            "on this user unless it queries.\n\n"
+            "Award points for SUBSTANCE, not framing. Harmless helpfulness — "
+            "offers to look up, confidence caveats — does not cost points "
+            "unless it introduces invented facts.\n\n"
+            "Points: "
+            "(+3) the response identifies Scout by name (capitalized "
+            "'Scout' appears); "
+            "(+3) the response names at least two registered sources — any "
+            "of web/slack/drive/CRM/contacts/notes/projects/jira/MCP "
+            "— with names or clear paraphrases; "
+            "(+2) no fabricated personal details about the user (no invented "
+            "name, company, or prior conversations unless they're in session "
+            "history); acknowledging 'I don't have any saved data about you "
+            "yet' or offering to look in the CRM is fine; "
+            "(+2) the response is concise — a few sentences or a short "
+            "bulleted block, not a capability-tour essay with every tool "
+            "listed."
+        ),
+    ),
+    Judged(
         id="web_citation_quality",
         prompt="Ask the web context about 'sample topic' and cite the source URL you find.",
         criteria=(

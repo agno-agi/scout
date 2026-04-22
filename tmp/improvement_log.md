@@ -78,3 +78,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, judges 8/8 avg 10.0
 - After:  validate 0, wiring 6/6, judges 9/9 avg 10.0
 - Notes: covers Slack-stub canary (permalink + #eng-roadmap channel); Scout relays channel + quote + URL verbatim. Matches gdrive/web pattern.
+
+## iter 13 — 2026-04-22
+- Action: P3 — add identity_recall judge
+- Before: validate 0, wiring 6/6, judges 9/9 avg 10.0
+- After:  validate 0, wiring 6/6, judges 10/10 avg ~9.6 (identity_recall bounces 7-8)
+- Notes: scores are noisier here (7 and 8 on back-to-back runs) because Scout's self-description varies. Rubric deliberately flexible on source names — any two registered sources counts.
