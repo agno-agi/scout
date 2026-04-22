@@ -60,6 +60,27 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="web_citation_quality",
+        prompt="Ask the web context about 'sample topic' and cite the source URL you find.",
+        criteria=(
+            "Score 1-10. The stub web context returns exactly this string:\n"
+            "'Stub web answer for eval purposes. Cited: https://example.com/stub'\n\n"
+            "Award points for SUBSTANCE, not framing. Harmless helpfulness — "
+            "caveats about the stub being a placeholder, offers to try other "
+            "sources — does not cost points unless it introduces invented facts.\n\n"
+            "Points: "
+            "(+4) the response includes the URL https://example.com/stub "
+            "(any recognizable form — full URL or the hostname plus path); "
+            "(+3) the response stays on the stub's content — no fabricated "
+            "topic facts presented as coming from the web; "
+            "(+2) the source is clearly attributed (a labeled 'source:' / "
+            "'cited at' / URL on its own line) rather than buried in prose "
+            "with no label; "
+            "(+1) the response is concise — one focused answer, not padded "
+            "with training trivia or cross-provider fan-out."
+        ),
+    ),
+    Judged(
         id="gdrive_citation_quality",
         prompt="Find a Google Drive file about the Q4 roadmap and tell me what it is.",
         criteria=(
