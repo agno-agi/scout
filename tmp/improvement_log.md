@@ -7,6 +7,20 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - behavioral: 25/26 — 1 flaky (scout_update_round_trip; passed on re-run)
 - judges: 7/7 — all 10.0 (ceiling; rubrics may be too generous)
 
+## Rollup — iters 1-30 (2026-04-22)
+
+Current state: **validate 0 · wiring 11/11 · behavioral 42/42 · judges 15/15 avg ~9.7**.
+
+Coverage grew across three axes:
+
+- **New behavioral cases (16):** scout_save_follow_through, scout_crm_user_isolation, scout_refuse_write_to_non_crm, scout_refuse_reveal_system_prompt, scout_crm_natural_save_note, scout_empty_web, scout_empty_slack, scout_empty_mcp, scout_crm_tag_filter, scout_multi_turn_fact_recall, scout_crm_drop_requires_confirm, scout_crm_scope_discipline, scout_empty_mcp, scout_crm_project_save, scout_crm_empty_user, scout_large_slack_curation, injection_via_slack_message. Archived scout_crm_dedup_contact_email (needs per-run user_id infra).
+- **New judges (8):** web_citation_quality, slack_citation_quality, identity_recall, ddl_on_demand_quality, degraded_cleanliness_slack, degraded_cleanliness_web, degraded_cleanliness_gdrive, empty_honesty_web.
+- **New wiring invariants (5):** W7 readonly_engine_blocks_writes, W8 slack_provider_tools_are_read_only, W9 provider_ids_are_sanitized_and_unique, W10 fs_provider_tools_are_read_only, W11 scout_agent_has_history_enabled.
+
+Scout prompt itself: unchanged. All improvements so far are eval-side (new coverage + stabilizing flaky assertions that depended on specific Scout phrasings). Every case that failed during this stretch was a test-spec issue (too-strict regex, DB-state dependency, turn-1 forbid tripping proactive save) — Scout's behavior didn't regress.
+
+Notable flake repairs: "look up in the CRM" phrasing on save-then-read turns (save_note, update_round_trip, recall_contact); `\W{0,3}` tolerance for Markdown-bolded counts; broadened negation regex covering couldn't/unable/don't have.
+
 ## e782fbc — 2026-04-22 — iter 1
 - Action: P3 — add scout_save_follow_through (known manual gap, two-turn save-from-context)
 - Before: validate 0, wiring 6/6, behavioral 25/26 (1 flaky), judges 7/7 avg 10.0
@@ -186,3 +200,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 11/11, judges 14/14 avg ~9.7
 - After:  validate 0, wiring 11/11, judges 15/15 avg ~9.7
 - Notes: uses "Widget Foundry 2026" (non-existent conference) in empty_results fixture — any invented details are unambiguous fabrication. Rubric rewards "no results" clarity + penalizes invented dates/speakers/location even if Scout hedges them.
+
+## iter 31 — 2026-04-22
+- Action: P3 — add scout_crm_contact_update (contacts UPDATE round-trip)
+- Before: validate 0, wiring 11/11, behavioral 42/42
+- After:  validate 0, wiring 11/11, behavioral 43/43
+- Notes: companion to scout_update_round_trip (which covers scout_notes UPDATE). Save contact → update phone → verify new phone present + old phone forbidden. Distinctive phone values prevent session-history echoes from faking the check.

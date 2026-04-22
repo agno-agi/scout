@@ -216,6 +216,39 @@ CASES: tuple[Case, ...] = (
         max_duration_s=120,
     ),
     Case(
+        id="scout_crm_contact_update",
+        # INSERT -> UPDATE -> verify round-trip on scout_contacts.
+        # Companion to scout_update_round_trip (which covers scout_notes).
+        # Uses distinctive phone values so the verify turn can catch the
+        # updated value specifically, not the old one from session history.
+        prompt=(
+            "For user 'eval-contact-upd-42', save a new contact: name "
+            "'Update Target', email 'upd-target@example.com', phone "
+            "'555-0101'."
+        ),
+        expected_tools=("update_crm",),
+        forbidden_tools=("query_web", "query_slack", "query_gdrive"),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'eval-contact-upd-42', update 'Update "
+                    "Target' — change the phone to '555-9999'."
+                ),
+                expected_tools=("update_crm",),
+            ),
+            FollowUp(
+                prompt=(
+                    "For user 'eval-contact-upd-42', look up 'Update "
+                    "Target' in the CRM and show the current phone."
+                ),
+                response_contains=("555-9999",),
+                response_forbids=("555-0101",),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=300,
+    ),
+    Case(
         id="scout_crm_project_save",
         # scout_projects is one of the shipped canonical tables but has no
         # behavioral coverage. Save a project (name + status), then list
