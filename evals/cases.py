@@ -102,6 +102,15 @@ CASES: tuple[Case, ...] = (
         # Permissive: matches stub's `query_web`, Parallel's `web_search` /
         # `web_extract`, and Exa MCP's `web_search_exa` / `web_fetch_exa`.
         expected_tools=("web",),
+        # Single-provider scope discipline — Python facts don't need CRM,
+        # Slack, Drive, FS, or Jira. Catches fan-out.
+        forbidden_tools=(
+            "query_crm",
+            "query_slack",
+            "query_gdrive",
+            "query_fs",
+            "query_mcp_jira",
+        ),
         max_duration_s=180,
     ),
     Case(
@@ -116,6 +125,14 @@ CASES: tuple[Case, ...] = (
         # Substring match: catches the stub's `query_slack` plus the real
         # toolkit's `search_workspace` / `get_channel_history` / `get_thread`.
         expected_tools=("slack",),
+        # Single-provider scope: "Search Slack" must stay in Slack.
+        forbidden_tools=(
+            "query_web",
+            "query_gdrive",
+            "query_crm",
+            "query_fs",
+            "query_mcp_jira",
+        ),
         response_contains=("eng-roadmap",),
         max_duration_s=180,
     ),
@@ -123,6 +140,13 @@ CASES: tuple[Case, ...] = (
         id="scout_gdrive_search",
         prompt="Search Google Drive for files about the Q4 roadmap and cite the link.",
         expected_tools=("query_gdrive",),
+        forbidden_tools=(
+            "query_web",
+            "query_slack",
+            "query_crm",
+            "query_fs",
+            "query_mcp_jira",
+        ),
         response_contains=("drive.google.com",),
         max_duration_s=180,
     ),
@@ -182,7 +206,12 @@ CASES: tuple[Case, ...] = (
         expected_tools=("update_crm",),
         followups=(
             FollowUp(
-                prompt=("For user 'eval-recall-contact-42', list any contacts tagged 'eval'."),
+                # "look up in the CRM" forces a fresh query_crm rather
+                # than letting Scout answer from session history.
+                prompt=(
+                    "For user 'eval-recall-contact-42', look up any "
+                    "contacts in the CRM tagged 'eval' and show them."
+                ),
                 response_contains=("Recall Target",),
                 expected_tools=("query_crm",),
                 forbidden_tools=("query_web", "query_slack", "query_gdrive"),
@@ -240,43 +269,13 @@ CASES: tuple[Case, ...] = (
         ),
         max_duration_s=180,
     ),
-    Case(
-        id="scout_crm_dedup_contact_email",
-        # CRM write instructions tell the sub-agent to UPDATE rather
-        # than INSERT when a contact with the same primary email already
-        # exists for the user. Save twice, then ask for the count — one
-        # record should exist, not two.
-        prompt=(
-            "For user 'dedup-42', save a new contact: name 'Alice "
-            "Dedup', email 'alice-dedup@example.com', tag 'initial'."
-        ),
-        expected_tools=("update_crm",),
-        followups=(
-            FollowUp(
-                prompt=(
-                    "For user 'dedup-42', save a new contact: name "
-                    "'Alice Dedup', email 'alice-dedup@example.com', "
-                    "tag 'followup'."
-                ),
-                expected_tools=("update_crm",),
-            ),
-            FollowUp(
-                prompt=(
-                    "For user 'dedup-42', how many contact records do I "
-                    "have with email 'alice-dedup@example.com'?"
-                ),
-                # Dedup succeeded = 1 row. "2 contacts" = double-INSERT.
-                # `\W{0,3}` tolerates Markdown wrappers like "**1**" that
-                # Scout renders around the count.
-                response_matches=(
-                    r"\b(1|one)\b\W{0,3}(contact|record|match|row|entry)",
-                ),
-                response_forbids=("2 contacts", "two contacts", "2 records", "two records"),
-                expected_tools=("query_crm",),
-            ),
-        ),
-        max_duration_s=300,
-    ),
+    # scout_crm_dedup_contact_email — archived 2026-04-22 iter 14.
+    # The test asserted dedup via turn-3 count, but the test user_id is
+    # fixed ('dedup-42') and PostgreSQL state persists across runs. Once
+    # a prior run leaves contact rows in the DB, Scout's dedup check sees
+    # them and the count assertion becomes order-dependent. To re-add
+    # the test cleanly we need a per-run user_id (dynamic cases) or a
+    # cleanup fixture — neither exists yet.
     Case(
         id="scout_crm_tag_filter",
         # Save two notes under one user with distinct tags, then list
