@@ -138,3 +138,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, behavioral 37/39 (drop regex flaked on Scout's varied refusal phrasings; save_follow_through turn-1 forbid on update_crm tripped when Scout proactively saved)
 - After:  validate 0, wiring 10/10, behavioral 39/39, judges 11/11 avg ~9.7
 - Notes: empty_results fixture now includes a jira MCP stub with empty query result. follow-through turn 1 now permits proactive save; turn 2 adds a tag that requires Alice's identity from turn 1 — real follow-through test without the false-negative on proactive-save runs. drop case dropped the refusal regex and relies on no-fake-success forbids.
+
+## iter 23 — 2026-04-22
+- Action: P3 — add scout_crm_project_save (first behavioral coverage for scout_projects)
+- Before: validate 0, wiring 10/10, behavioral 39/39
+- After:  validate 0, wiring 10/10, behavioral 40/40, judges 11/11 avg ~9.7
+- Notes: scout_projects had no test — save/list covered only scout_notes (save_note, update_round_trip) and scout_contacts (save_contact, recall_contact, follow_through). Now all three canonical tables have round-trip coverage.

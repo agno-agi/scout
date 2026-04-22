@@ -194,6 +194,28 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_crm_project_save",
+        # scout_projects is one of the shipped canonical tables but has no
+        # behavioral coverage. Save a project (name + status), then list
+        # it back — exercises the projects write + read path.
+        prompt=(
+            "For user 'eval-proj-42', start a new project called "
+            "'Q3 launch' with status 'planning'."
+        ),
+        expected_tools=("update_crm",),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'eval-proj-42', look up my projects in "
+                    "the CRM named 'Q3 launch' and show them."
+                ),
+                response_contains=("Q3 launch", "planning"),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=240,
+    ),
+    Case(
         id="scout_recall_contact",
         # Confirms the read-path works on the contacts table (scout_save_note
         # already covers the notes round-trip). Uses a pre-seeded fixture user
