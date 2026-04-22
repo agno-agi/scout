@@ -156,3 +156,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, judges 11/11 avg ~9.7
 - After:  validate 0, wiring 10/10, judges 12/12 avg ~9.7
 - Notes: complements scout_slack_degraded (behavioral) with a quality judge. Rubric checks Scout names the failure mode, doesn't fabricate Slack content, actually tried the Slack tool (not pre-emptive refusal), and stays concise. 10/10 twice.
+
+## iter 26 — 2026-04-22
+- Action: P3 — add scout_large_slack_curation + large_slack fixture
+- Before: validate 0, wiring 10/10, behavioral 41/41
+- After:  validate 0, wiring 10/10, behavioral 42/42, judges 12/12 avg ~9.7
+- Notes: mirrors scout_large_gdrive_curation with 20 stubbed slack messages. Assertion checks Scout acknowledges the count (20) in its gist — same permissive contract as the gdrive version.

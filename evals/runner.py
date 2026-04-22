@@ -189,6 +189,22 @@ def build_fixture(name: str) -> list[Any]:
             ),
             _real_crm(),
         ]
+    if name == "large_slack":
+        return [
+            _stub_context("web", "Web (stub)", WEB_STUB_TEXT),
+            _stub_context(
+                "slack",
+                "Slack (stub)",
+                "Found 20 messages in #eng-roadmap:\n"
+                + "\n".join(
+                    f"- U07BULK_{i:02d} @ 1712{i:05d}.000100: 'Roadmap update {i:02d} — "
+                    f"milestone {i:02d} on track for 2026-0{(i % 9) + 1}-15.'"
+                    for i in range(1, 21)
+                ),
+            ),
+            _stub_context("gdrive", "Google Drive (stub)", GDRIVE_STUB_TEXT),
+            _real_crm(),
+        ]
     if name == "real":
         from scout.contexts import create_context_providers
 

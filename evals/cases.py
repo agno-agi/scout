@@ -658,6 +658,16 @@ CASES: tuple[Case, ...] = (
     # Large tool output — curate, don't dump
     # -----------------------------------------------------------------------
     Case(
+        id="scout_large_slack_curation",
+        prompt="Search Slack for #eng-roadmap updates and give me the gist.",
+        expected_tools=("slack",),
+        # 20 messages in the stub; Scout should acknowledge the volume
+        # and summarize (mirror of scout_large_gdrive_curation).
+        response_contains=("20",),
+        fixture="large_slack",
+        max_duration_s=180,
+    ),
+    Case(
         id="scout_large_gdrive_curation",
         prompt="Search Drive for roadmap files.",
         expected_tools=("query_gdrive",),
