@@ -180,3 +180,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10
 - After:  validate 0, wiring 11/11
 - Notes: every multi-turn case depends on add_history_to_context=True + num_history_runs>=2. Without an invariant, a refactor could flip these off and every multi-turn case would silently re-fail in LLM-noise-only mode.
+
+## iter 30 — 2026-04-22
+- Action: P3 — add empty_honesty_web judge
+- Before: validate 0, wiring 11/11, judges 14/14 avg ~9.7
+- After:  validate 0, wiring 11/11, judges 15/15 avg ~9.7
+- Notes: uses "Widget Foundry 2026" (non-existent conference) in empty_results fixture — any invented details are unambiguous fabrication. Rubric rewards "no results" clarity + penalizes invented dates/speakers/location even if Scout hedges them.
