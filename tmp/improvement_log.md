@@ -168,3 +168,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, judges 12/12 avg ~9.7
 - After:  validate 0, wiring 10/10, judges 13/13 avg ~9.7
 - Notes: mirrors degraded_cleanliness_slack but with a stronger "no training fallback" dimension — web_errors is the fixture where Scout is MOST likely to reach for training knowledge about Python; rubric explicitly penalizes "Guido van Rossum" / "1991" / "dynamically typed" trivia when the web is offline.
+
+## iter 28 — 2026-04-22
+- Action: P3 — add degraded_cleanliness_gdrive judge
+- Before: validate 0, wiring 10/10, judges 13/13 avg ~9.7
+- After:  validate 0, wiring 10/10, judges 14/14 avg ~9.7
+- Notes: completes the degraded-cleanliness trio (web, slack, gdrive). Gdrive-specific rubric penalizes leaking the default fixture's 'Q4 Roadmap 2026' canary or the 1eval_stub URL when the degraded fixture returns no data.

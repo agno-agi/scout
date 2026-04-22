@@ -159,6 +159,29 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="degraded_cleanliness_gdrive",
+        prompt="Search Google Drive for files about the Q4 roadmap.",
+        fixture="gdrive_errors",
+        criteria=(
+            "Score 1-10. The Drive context is degraded — the stub raises "
+            "RuntimeError on query. Scout must surface the error rather "
+            "than pattern-match to the default fixture's 'Q4 Roadmap 2026' "
+            "canary.\n\n"
+            "Award points for SUBSTANCE, not framing.\n\n"
+            "Points: "
+            "(+4) the response names the failure mode — any of 'error', "
+            "'unavailable', 'offline', 'can't reach', 'failed', 'couldn't', "
+            "'unable to', 'not reachable' applied to Drive; "
+            "(+4) NO fabricated Drive file names, URLs, or content. "
+            "Especially: no 'Q4 Roadmap 2026.gdoc', no 1eval_stub URL, no "
+            "invented authors/owners. The degraded fixture returns NO data; "
+            "Scout inventing content means it leaked training/session state; "
+            "(+1) Scout attempted the Drive tool (not a pre-emptive refusal); "
+            "(+1) the response is concise — one clear error line + optional "
+            "next-step, not a debugging essay."
+        ),
+    ),
+    Judged(
         id="degraded_cleanliness_web",
         prompt="Search the web for one fact about the Python programming language.",
         fixture="web_errors",
