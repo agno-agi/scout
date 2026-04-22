@@ -8,6 +8,7 @@ Checks:
     W5  GDrive provider uses `ScoutGoogleDriveTools`, not bare `GoogleDriveTools`.
     W6  `MCPContextProvider` implements the lifecycle interface cleanly.
     W7  Readonly engine rejects writes at the DB level (belt for `default_transaction_read_only`).
+    W8  Slack provider's SlackTools has send/upload/download disabled.
 
 Each check is a function that returns None on PASS and raises
 ``AssertionError`` on FAIL. Zero LLM, zero network — runs in under a second.
@@ -221,6 +222,30 @@ def w5_gdrive_uses_scout_subclass() -> None:
         )
 
 
+def w8_slack_provider_tools_are_read_only() -> None:
+    """The Slack provider doesn't register any send/upload/download tool.
+
+    Scout's Slack context is read-only by design — posting to Slack goes
+    through the Slack *interface*, not the context. SlackTools maps its
+    enable_* flags to which tool functions get registered; this check
+    walks the resulting functions dict and fails if any write tool is
+    present.
+    """
+    from scout.context.slack import SlackContextProvider
+
+    provider = SlackContextProvider(token="dummy-eval-token")
+    toolkit = provider._ensure_tools()
+    functions = getattr(toolkit, "functions", {}) or {}
+    names = list(functions.keys())
+    forbidden = ("send_message", "send_message_thread", "upload_file", "download_file")
+    leaks = [n for n in names for bad in forbidden if bad in n]
+    if leaks:
+        raise AssertionError(
+            f"SlackContextProvider: toolkit has write tool(s) {leaks}; "
+            "Slack context must stay read-only (posts go through the interface)"
+        )
+
+
 def w7_readonly_engine_blocks_writes() -> None:
     """The readonly engine rejects any INSERT/UPDATE/DELETE/CREATE/DROP at the DB level.
 
@@ -322,6 +347,7 @@ CHECKS = (
     w5_gdrive_uses_scout_subclass,
     w6_mcp_provider_lifecycle,
     w7_readonly_engine_blocks_writes,
+    w8_slack_provider_tools_are_read_only,
 )
 
 

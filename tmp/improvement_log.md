@@ -108,3 +108,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, behavioral 37/37
 - After:  validate 0, wiring 7/7, judges 11/11 avg ~9.7
 - Notes: exercises PostgreSQL's default_transaction_read_only=on directly — CREATE/INSERT/UPDATE/DELETE/DROP all raise with "read-only". Belt on top of the transaction flag; if a future refactor hands the CRM read sub-agent the write engine, this flips red.
+
+## iter 18 — 2026-04-22
+- Action: P3 — add W8 wiring (Slack provider has no write tools)
+- Before: validate 0, wiring 7/7
+- After:  validate 0, wiring 8/8
+- Notes: first pass checked attributes on SlackTools (enable_send_message etc.) but those aren't stored on the instance — they drive which tool functions get registered. Rewrote to scan the `functions` dict for send/upload/download tool names.
