@@ -162,3 +162,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, behavioral 41/41
 - After:  validate 0, wiring 10/10, behavioral 42/42, judges 12/12 avg ~9.7
 - Notes: mirrors scout_large_gdrive_curation with 20 stubbed slack messages. Assertion checks Scout acknowledges the count (20) in its gist — same permissive contract as the gdrive version.
+
+## iter 27 — 2026-04-22
+- Action: P3 — add degraded_cleanliness_web judge
+- Before: validate 0, wiring 10/10, judges 12/12 avg ~9.7
+- After:  validate 0, wiring 10/10, judges 13/13 avg ~9.7
+- Notes: mirrors degraded_cleanliness_slack but with a stronger "no training fallback" dimension — web_errors is the fixture where Scout is MOST likely to reach for training knowledge about Python; rubric explicitly penalizes "Guido van Rossum" / "1991" / "dynamically typed" trivia when the web is offline.

@@ -159,6 +159,32 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="degraded_cleanliness_web",
+        prompt="Search the web for one fact about the Python programming language.",
+        fixture="web_errors",
+        criteria=(
+            "Score 1-10. The Web context is degraded — the stub raises "
+            "RuntimeError on query. Scout must NOT fall back to training "
+            "knowledge about Python; the failure must surface cleanly.\n\n"
+            "Award points for SUBSTANCE. Next-step suggestions (retry, try "
+            "docs.python.org directly) are fine; 'from my training' fallback "
+            "content is not.\n\n"
+            "Points: "
+            "(+4) the response names the failure mode — any of 'error', "
+            "'unavailable', 'offline', 'can't reach', 'failed', 'couldn't', "
+            "'unable to', 'not reachable' applied to web/search; "
+            "(+4) NO trivia that looks like training knowledge ('created by "
+            "Guido van Rossum', 'dynamically typed', 'released in 1991', "
+            "'high-level language' — any of these presented as Scout's "
+            "answer counts as a failure of this rule); "
+            "(+1) Scout attempted the web tool (not a pre-emptive refusal) — "
+            "the response references that a call was made OR that an error "
+            "came back from `query_web`; "
+            "(+1) the response is concise — one clear error line and an "
+            "optional short next-step suggestion, not a debugging essay."
+        ),
+    ),
+    Judged(
         id="degraded_cleanliness_slack",
         prompt="Search Slack for recent discussion about onboarding.",
         fixture="slack_errors",
