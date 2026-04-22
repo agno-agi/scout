@@ -105,6 +105,29 @@ JUDGED: tuple[Judged, ...] = (
         ),
     ),
     Judged(
+        id="slack_citation_quality",
+        prompt="Search Slack for Q4 roadmap discussion and cite the source.",
+        criteria=(
+            "Score 1-10. The stub Slack context returns exactly this string:\n"
+            "\"From #eng-roadmap (U07EVAL): 'Q4 roadmap finalized for "
+            "2026-03-11'. Permalink: "
+            'https://example.slack.com/archives/C07EVAL/p1712345000"\n\n'
+            "Award points for SUBSTANCE, not framing. Harmless helpfulness — "
+            "caveats about stub content, offers to expand the thread — does "
+            "not cost points unless it introduces invented facts.\n\n"
+            "Points: "
+            "(+3) the response quotes the stub's message ('Q4 roadmap "
+            "finalized for 2026-03-11') — any faithful rewording is fine; "
+            "(+3) the response includes the channel name '#eng-roadmap' "
+            "OR the permalink URL (any recognizable form); "
+            "(+2) no fabricated facts — no invented participants, owners, "
+            "milestones, or quotes beyond what the stub returned (the user "
+            "id 'U07EVAL' is in the stub, so echoing it isn't fabrication); "
+            "(+2) the source is clearly attributed (channel, permalink, or "
+            "a 'Slack:' label) rather than blended into prose."
+        ),
+    ),
+    Judged(
         id="scout_concise_write_ack",
         prompt=(
             "For user 'eval-user-42', save a note titled 'ship status' with body 'API release slipping to next week'."

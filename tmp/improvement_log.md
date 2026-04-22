@@ -72,3 +72,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 6/6, judges 7/7 avg 10.0
 - After:  validate 0, wiring 6/6, judges 8/8 avg 10.0 (skipped full behavioral — judges.py is isolated from case assertions)
 - Notes: mirrors gdrive_citation_quality — stub returns a canary URL + single-sentence answer; rubric checks Scout relays both and labels the source.
+
+## iter 12 — 2026-04-22
+- Action: P3 — add slack_citation_quality judge
+- Before: validate 0, wiring 6/6, judges 8/8 avg 10.0
+- After:  validate 0, wiring 6/6, judges 9/9 avg 10.0
+- Notes: covers Slack-stub canary (permalink + #eng-roadmap channel); Scout relays channel + quote + URL verbatim. Matches gdrive/web pattern.
