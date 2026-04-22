@@ -9,6 +9,7 @@ Checks:
     W6  `MCPContextProvider` implements the lifecycle interface cleanly.
     W7  Readonly engine rejects writes at the DB level (belt for `default_transaction_read_only`).
     W8  Slack provider's SlackTools has send/upload/download disabled.
+    W9  Every registered provider has a sanitized, unique id + tool name.
 
 Each check is a function that returns None on PASS and raises
 ``AssertionError`` on FAIL. Zero LLM, zero network — runs in under a second.
@@ -246,6 +247,42 @@ def w8_slack_provider_tools_are_read_only() -> None:
         )
 
 
+def w9_provider_ids_are_sanitized_and_unique() -> None:
+    """Every registered ContextProvider has a sanitized, unique id.
+
+    Ids feed into `query_<id>` / `update_<id>` tool names on Scout. If
+    a provider sneaks through with uppercase, spaces, or punctuation,
+    the resulting tool name is either invalid or collides with a
+    sibling. Dedup is also checked in `create_context_providers`, but
+    this catches the case where two providers coincidentally end up
+    with the same tool name after sanitization.
+    """
+    import re
+
+    from scout.contexts import create_context_providers
+
+    sanitized = re.compile(r"^[a-z0-9_]+$")
+    seen_ids: dict[str, str] = {}
+    seen_tool_names: dict[str, str] = {}
+    for ctx in create_context_providers():
+        if not isinstance(ctx.id, str) or not ctx.id:
+            raise AssertionError(f"Provider {type(ctx).__name__} has empty/non-string id {ctx.id!r}")
+        if not sanitized.match(ctx.id):
+            raise AssertionError(
+                f"Provider id {ctx.id!r} contains non-sanitized chars — tool names would "
+                "be invalid. ids must match ^[a-z0-9_]+$"
+            )
+        if ctx.id in seen_ids:
+            raise AssertionError(f"Duplicate provider id {ctx.id!r}: {seen_ids[ctx.id]} vs {type(ctx).__name__}")
+        seen_ids[ctx.id] = type(ctx).__name__
+        if ctx.query_tool_name in seen_tool_names:
+            raise AssertionError(
+                f"Duplicate query_tool_name {ctx.query_tool_name!r}: "
+                f"{seen_tool_names[ctx.query_tool_name]} vs {type(ctx).__name__}"
+            )
+        seen_tool_names[ctx.query_tool_name] = type(ctx).__name__
+
+
 def w7_readonly_engine_blocks_writes() -> None:
     """The readonly engine rejects any INSERT/UPDATE/DELETE/CREATE/DROP at the DB level.
 
@@ -348,6 +385,7 @@ CHECKS = (
     w6_mcp_provider_lifecycle,
     w7_readonly_engine_blocks_writes,
     w8_slack_provider_tools_are_read_only,
+    w9_provider_ids_are_sanitized_and_unique,
 )
 
 

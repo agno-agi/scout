@@ -114,3 +114,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 7/7
 - After:  validate 0, wiring 8/8
 - Notes: first pass checked attributes on SlackTools (enable_send_message etc.) but those aren't stored on the instance — they drive which tool functions get registered. Rewrote to scan the `functions` dict for send/upload/download tool names.
+
+## iter 19 — 2026-04-22
+- Action: P3 — add W9 wiring (provider ids + tool names sanitized, unique)
+- Before: validate 0, wiring 8/8
+- After:  validate 0, wiring 9/9
+- Notes: verifies every registered provider id matches ^[a-z0-9_]+$, no duplicate ids, no duplicate query_tool_names. create_context_providers already dedups on id, but this also catches collisions after sanitization (e.g. "foo bar" and "foo_bar" both mapping to foo_bar).
