@@ -144,3 +144,9 @@ Baseline captured 2026-04-22 19:34 on feat/auto-improve-1.
 - Before: validate 0, wiring 10/10, behavioral 39/39
 - After:  validate 0, wiring 10/10, behavioral 40/40, judges 11/11 avg ~9.7
 - Notes: scout_projects had no test — save/list covered only scout_notes (save_note, update_round_trip) and scout_contacts (save_contact, recall_contact, follow_through). Now all three canonical tables have round-trip coverage.
+
+## iter 24 — 2026-04-22
+- Action: P3 — add scout_crm_empty_user (fresh user_id with no data)
+- Before: validate 0, wiring 10/10, behavioral 40/40
+- After:  validate 0, wiring 10/10, behavioral 41/41, judges 11/11 avg ~9.7
+- Notes: mirrors scout_empty_gdrive/web/slack but for the CRM read sub-agent — brand-new user_id returns "no saved notes" without fabricating example/sample notes. Tests the read sub-agent's scope-by-user_id.

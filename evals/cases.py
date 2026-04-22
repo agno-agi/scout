@@ -194,6 +194,28 @@ CASES: tuple[Case, ...] = (
         max_duration_s=180,
     ),
     Case(
+        id="scout_crm_empty_user",
+        # Queries for a brand-new user_id — the CRM read sub-agent
+        # should return "no data" without fabricating. Unique user_id
+        # uses a canary suffix unlikely to collide with prior runs.
+        prompt=(
+            "For user 'never-seen-user-empty-42', list any saved notes "
+            "in the CRM."
+        ),
+        expected_tools=("query_crm",),
+        response_matches=(
+            r"(no\s+(notes|results|matches|records|data)|(did|could)n['\u2019]?t\s+find|"
+            r"nothing|not\s+found|empty|no\s+(result|information))",
+        ),
+        # Never fabricate fictional notes.
+        response_forbids=(
+            "sample note",
+            "example note",
+            "first note",
+        ),
+        max_duration_s=120,
+    ),
+    Case(
         id="scout_crm_project_save",
         # scout_projects is one of the shipped canonical tables but has no
         # behavioral coverage. Save a project (name + status), then list
