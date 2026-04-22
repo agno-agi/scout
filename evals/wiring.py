@@ -10,6 +10,7 @@ Checks:
     W7  Readonly engine rejects writes at the DB level (belt for `default_transaction_read_only`).
     W8  Slack provider's SlackTools has send/upload/download disabled.
     W9  Every registered provider has a sanitized, unique id + tool name.
+    W10 FS provider's FileTools has save/delete/replace disabled.
 
 Each check is a function that returns None on PASS and raises
 ``AssertionError`` on FAIL. Zero LLM, zero network — runs in under a second.
@@ -247,6 +248,30 @@ def w8_slack_provider_tools_are_read_only() -> None:
         )
 
 
+def w10_fs_provider_tools_are_read_only() -> None:
+    """The Filesystem provider's FileTools disables save/delete/replace.
+
+    Scout's fs context is read-only by design — agents can browse and
+    read files under the configured root but cannot create, mutate, or
+    delete anything. If a future refactor flips any write flag back on
+    Scout gains a write surface that bypasses the CRM's scout-schema
+    guardrails.
+    """
+    from scout.context.fs import FilesystemContextProvider
+
+    provider = FilesystemContextProvider(root="/tmp")
+    toolkit = provider._all_tools()[0]
+    functions = getattr(toolkit, "functions", {}) or {}
+    names = list(functions.keys())
+    forbidden = ("save_file", "delete_file", "replace_file_chunk", "write_file", "create_file")
+    leaks = [n for n in names for bad in forbidden if bad in n]
+    if leaks:
+        raise AssertionError(
+            f"FilesystemContextProvider: toolkit has write tool(s) {leaks}; "
+            "fs context must stay read-only"
+        )
+
+
 def w9_provider_ids_are_sanitized_and_unique() -> None:
     """Every registered ContextProvider has a sanitized, unique id.
 
@@ -386,6 +411,7 @@ CHECKS = (
     w7_readonly_engine_blocks_writes,
     w8_slack_provider_tools_are_read_only,
     w9_provider_ids_are_sanitized_and_unique,
+    w10_fs_provider_tools_are_read_only,
 )
 
 
