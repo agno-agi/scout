@@ -216,6 +216,36 @@ CASES: tuple[Case, ...] = (
         max_duration_s=120,
     ),
     Case(
+        id="scout_crm_project_status_update",
+        # INSERT -> UPDATE status -> verify round-trip on scout_projects.
+        # Mirrors scout_crm_contact_update for the projects table.
+        prompt=(
+            "For user 'eval-proj-status-42', start a new project called "
+            "'Onboarding revamp' with status 'planning'."
+        ),
+        expected_tools=("update_crm",),
+        forbidden_tools=("query_web", "query_slack", "query_gdrive"),
+        followups=(
+            FollowUp(
+                prompt=(
+                    "For user 'eval-proj-status-42', move 'Onboarding "
+                    "revamp' to status 'in-progress'."
+                ),
+                expected_tools=("update_crm",),
+            ),
+            FollowUp(
+                prompt=(
+                    "For user 'eval-proj-status-42', look up 'Onboarding "
+                    "revamp' in the CRM and show the current status."
+                ),
+                response_contains=("in-progress",),
+                response_forbids=("planning",),
+                expected_tools=("query_crm",),
+            ),
+        ),
+        max_duration_s=300,
+    ),
+    Case(
         id="scout_crm_contact_update",
         # INSERT -> UPDATE -> verify round-trip on scout_contacts.
         # Companion to scout_update_round_trip (which covers scout_notes).
@@ -678,8 +708,10 @@ CASES: tuple[Case, ...] = (
         response_matches=(
             # Covers "no X", "didn't/couldn't find", "nothing found",
             # "not found", "no files", plus "empty" / "zero" / "0 X"
-            # phrasings Scout used on real empty-result runs.
-            r"(no\s+(matches|results|files|hits)|(did|could)n['\u2019]?t\s+find|"
+            # phrasings Scout used on real empty-result runs. Also
+            # "no data"/"no info"/"no records" for LLM paraphrase drift.
+            r"(no\s+(matches|results|files|hits|data|info|information|records)|"
+            r"(did|could)n['\u2019]?t\s+find|"
             r"nothing\s+found|not\s+found|no(\s+(drive|matching))?\s+files?|"
             r"empty|zero\s+(matches|results|files|hits)|0\s+(matches|results|files|hits))",
         ),
