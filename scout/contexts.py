@@ -265,7 +265,7 @@ def _create_gmail_provider() -> GmailContextProvider | None:
     has_sa = getenv("GOOGLE_SERVICE_ACCOUNT_FILE") and getenv("GOOGLE_DELEGATED_USER")
     if not (has_oauth or has_sa):
         return None
-    return GmailContextProvider(model=default_model(), read=True, write=False)
+    return GmailContextProvider(model=default_model(), read=True, write=True)
 
 
 def _create_calendar_provider() -> CalendarContextProvider | None:
@@ -278,7 +278,7 @@ def _create_calendar_provider() -> CalendarContextProvider | None:
     has_sa = getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
     if not (has_oauth or has_sa):
         return None
-    return CalendarContextProvider(model=default_model(), read=True, write=False)
+    return CalendarContextProvider(model=default_model(), read=True, write=True)
 
 
 def _create_mcp_providers() -> list[MCPContextProvider]:
