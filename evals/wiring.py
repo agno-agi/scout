@@ -327,6 +327,45 @@ def w8_wiki_provider_surfaces() -> None:
         raise AssertionError(f"voice wiki should be read-only (write=False) — found update tool in {voice_tools}")
 
 
+def w10_slack_provider_read_only() -> None:
+    """Scout's Slack provider must not expose ``update_slack``.
+
+    Outbound Slack is handled by the Slack interface webhook
+    (``/slack/events``), not by Scout's tools. ``write=False`` in
+    ``_create_slack_provider`` is the only thing keeping
+    ``update_slack`` off Scout's tool list. If the kwarg gets dropped
+    in a refactor, Scout will silently gain the ability to post to
+    Slack from any user prompt — and (verified in the improve loop)
+    *will* use it.
+    """
+    import os
+
+    from scout.contexts import _create_slack_provider
+
+    prior = os.environ.get("SLACK_BOT_TOKEN")
+    os.environ["SLACK_BOT_TOKEN"] = "xoxb-fake-for-wiring-check"
+    try:
+        provider = _create_slack_provider()
+        if provider is None:
+            raise AssertionError(
+                "_create_slack_provider returned None despite SLACK_BOT_TOKEN being set"
+            )
+        tools = _tool_names(provider.get_tools())
+    finally:
+        if prior is None:
+            os.environ.pop("SLACK_BOT_TOKEN", None)
+        else:
+            os.environ["SLACK_BOT_TOKEN"] = prior
+
+    if "query_slack" not in tools:
+        raise AssertionError(f"slack provider should expose query_slack; got {tools}")
+    if any("update_slack" in n for n in tools):
+        raise AssertionError(
+            f"slack provider should be read-only (write=False) — found update tool in {tools}; "
+            "Scout would silently gain the ability to post to any channel"
+        )
+
+
 def w9_followups_in_canonical_ddl() -> None:
     """``scout_followups`` ships in the canonical DDL alongside contacts/projects/notes.
 
@@ -354,6 +393,7 @@ CHECKS = (
     w7_scout_has_default_user_id,
     w8_wiki_provider_surfaces,
     w9_followups_in_canonical_ddl,
+    w10_slack_provider_read_only,
 )
 
 

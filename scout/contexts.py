@@ -237,9 +237,13 @@ def _create_database_provider() -> DatabaseContextProvider:
 
 
 def _create_slack_provider() -> SlackContextProvider | None:
+    """Slack — read-only. Outbound goes through the Slack interface
+    (`/slack/events` webhook), not Scout's tools, so `update_slack`
+    must not be exposed. Mirrors `_create_voice_wiki`'s `write=False`.
+    """
     if not getenv("SLACK_BOT_TOKEN"):
         return None
-    return SlackContextProvider(model=default_model())
+    return SlackContextProvider(model=default_model(), write=False)
 
 
 def _create_gdrive_provider() -> GDriveContextProvider | None:
