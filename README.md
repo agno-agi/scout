@@ -33,6 +33,17 @@ Scout is now running at `http://localhost:8000`.
 
 https://github.com/user-attachments/assets/ed49a6c4-926b-4d5d-a105-8a0d15021d3b
 
+## Scout UI — chat + live dashboard in your browser
+
+A Next.js dashboard that pairs Scout chat with a real Google Calendar week grid, an interactive Gmail unread list (open thread, mark read/unread), a Postgres-backed follow-ups widget, and an LLM-summarized web news card. Streaming chat over SSE, light/dark theme, draggable splitter.
+
+```sh
+docker compose up -d --build
+# Open http://localhost:3000
+```
+
+Setup, architecture, and troubleshooting in [`web/README.md`](web/README.md).
+
 ## Chat with Scout in Slack
 
 Scout is designed to live in Slack as your teammate. Follow [docs/SLACK_CONNECT.md](docs/SLACK_CONNECT.md) to add Scout to your slack workspace.

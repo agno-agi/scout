@@ -20,6 +20,7 @@ from agno.context.gmail import GmailContextProvider
 from agno.context.mcp import MCPContextProvider
 from agno.context.provider import ContextProvider
 from agno.context.slack import SlackContextProvider
+from agno.context.web.exa import ExaBackend
 from agno.context.web.parallel import ParallelBackend
 from agno.context.web.parallel_mcp import ParallelMCPBackend
 from agno.context.web.provider import WebContextProvider
@@ -175,7 +176,14 @@ async def setup_context_providers() -> list[ContextProvider]:
 
 
 def _create_web_provider() -> WebContextProvider:
+    """Backend selection (priority order):
+      EXA_API_KEY      → ExaBackend (Exa SDK — search + contents)
+      PARALLEL_API_KEY → ParallelBackend (Parallel SDK)
+      neither set      → ParallelMCPBackend (keyless via Parallel public MCP)
+    """
     model = default_model()
+    if getenv("EXA_API_KEY"):
+        return WebContextProvider(backend=ExaBackend(), model=model)
     if getenv("PARALLEL_API_KEY"):
         return WebContextProvider(backend=ParallelBackend(), model=model)
     return WebContextProvider(backend=ParallelMCPBackend(), model=model)
