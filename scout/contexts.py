@@ -13,8 +13,10 @@ import json
 from os import getenv
 from pathlib import Path
 
+from agno.context.calendar import CalendarContextProvider
 from agno.context.database import DatabaseContextProvider
 from agno.context.gdrive import GDriveContextProvider
+from agno.context.gmail import GmailContextProvider
 from agno.context.mcp import MCPContextProvider
 from agno.context.provider import ContextProvider
 from agno.context.slack import SlackContextProvider
@@ -43,6 +45,13 @@ SCOUT_FS_ROOT = Path(__file__).resolve().parents[1]
 WIKI_KNOWLEDGE_PATH = SCOUT_FS_ROOT / "wiki" / "knowledge"
 WIKI_VOICE_PATH = SCOUT_FS_ROOT / "wiki" / "voice"
 
+# OAuth tokens for Gmail/Calendar live under .scout/ (gitignored). The host
+# OAuth flow (scripts/google_oauth_setup.py) writes them here; the container
+# reads them via the bind mount in compose.yaml.
+SCOUT_STATE_PATH = SCOUT_FS_ROOT / ".scout"
+GMAIL_TOKEN_PATH = SCOUT_STATE_PATH / "gmail_token.json"
+CALENDAR_TOKEN_PATH = SCOUT_STATE_PATH / "calendar_token.json"
+
 
 # ---------------------------------------------------------------------------
 # Create Context Providers
@@ -67,7 +76,12 @@ def create_context_providers() -> list[ContextProvider]:
         _create_knowledge_wiki(),
         _create_voice_wiki(),
     ]
-    for factory in (_create_slack_provider, _create_gdrive_provider):
+    for factory in (
+        _create_slack_provider,
+        _create_gdrive_provider,
+        _create_gmail_provider,
+        _create_calendar_provider,
+    ):
         try:
             provider = factory()
         except Exception as exc:
@@ -246,6 +260,40 @@ def _create_gdrive_provider() -> GDriveContextProvider | None:
     if not getenv("GOOGLE_SERVICE_ACCOUNT_FILE"):
         return None
     return GDriveContextProvider(model=default_model())
+
+
+def _create_gmail_provider() -> GmailContextProvider | None:
+    """Gmail provider — read-only.
+
+    Activates when either:
+      - GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET are set (OAuth, browser flow
+        on first use; token cached at .scout/gmail_token.json)
+      - GOOGLE_SERVICE_ACCOUNT_FILE + GOOGLE_DELEGATED_USER are set
+        (service account with domain-wide delegation)
+    """
+    has_oauth = getenv("GOOGLE_CLIENT_ID") and getenv("GOOGLE_CLIENT_SECRET")
+    has_sa = getenv("GOOGLE_SERVICE_ACCOUNT_FILE") and getenv("GOOGLE_DELEGATED_USER")
+    if not (has_oauth or has_sa):
+        return None
+    SCOUT_STATE_PATH.mkdir(parents=True, exist_ok=True)
+    return GmailContextProvider(
+        token_path=str(GMAIL_TOKEN_PATH),
+        model=default_model(),
+    )
+
+
+def _create_calendar_provider() -> CalendarContextProvider | None:
+    """Calendar provider — read-only. Same env var rules as Gmail (delegation
+    is optional for Calendar — without it, SA uses its own calendar)."""
+    has_oauth = getenv("GOOGLE_CLIENT_ID") and getenv("GOOGLE_CLIENT_SECRET")
+    has_sa = bool(getenv("GOOGLE_SERVICE_ACCOUNT_FILE"))
+    if not (has_oauth or has_sa):
+        return None
+    SCOUT_STATE_PATH.mkdir(parents=True, exist_ok=True)
+    return CalendarContextProvider(
+        token_path=str(CALENDAR_TOKEN_PATH),
+        model=default_model(),
+    )
 
 
 def _create_mcp_providers() -> list[MCPContextProvider]:

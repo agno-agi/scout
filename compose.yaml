@@ -32,6 +32,11 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      # Use the local agno dev checkout (feat/google-context-providers)
+      # in editable mode by mounting it over the installed wheel. Gmail
+      # and Calendar providers live on this branch; PyPI 2.6.4 doesn't
+      # ship them yet. Drop this mount once a release includes them.
+      - /Users/kaustubh/Desktop/Agno/agno/libs/agno/agno:/usr/local/lib/python3.12/site-packages/agno
     env_file:
       - path: .env
         required: false
@@ -51,6 +56,30 @@ services:
       - scout
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  scout-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: scout-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Bind-mount source for hot reload, but keep the container's
+      # node_modules and .next so they don't get clobbered by the host.
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Browser hits the API directly at localhost:8000 (CORS allows it),
+      # so this stays as the host-visible URL.
+      NEXT_PUBLIC_SCOUT_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SCOUT_USER_ID: scout-web-user
+    depends_on:
+      - scout-api
+    networks:
+      - scout
 
 networks:
   scout:
