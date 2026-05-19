@@ -13,8 +13,10 @@ import json
 from os import getenv
 from pathlib import Path
 
+from agno.context.calendar import GoogleCalendarContextProvider
 from agno.context.database import DatabaseContextProvider
 from agno.context.gdrive import GDriveContextProvider
+from agno.context.gmail import GmailContextProvider
 from agno.context.mcp import MCPContextProvider
 from agno.context.provider import ContextProvider
 from agno.context.slack import SlackContextProvider
@@ -67,7 +69,13 @@ def create_context_providers() -> list[ContextProvider]:
         _create_knowledge_wiki(),
         _create_voice_wiki(),
     ]
-    for factory in (_create_slack_provider, _create_gdrive_provider):
+    optional_factories = (
+        _create_slack_provider,
+        _create_gdrive_provider,
+        _create_gmail_provider,
+        _create_calendar_provider,
+    )
+    for factory in optional_factories:
         try:
             provider = factory()
         except Exception as exc:
@@ -246,6 +254,30 @@ def _create_gdrive_provider() -> GDriveContextProvider | None:
     if not getenv("GOOGLE_SERVICE_ACCOUNT_FILE"):
         return None
     return GDriveContextProvider(model=default_model())
+
+
+def _create_gmail_provider() -> GmailContextProvider | None:
+    sa_path = getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
+    has_oauth = getenv("GOOGLE_CLIENT_ID") and getenv("GOOGLE_CLIENT_SECRET")
+
+    if not sa_path and not has_oauth:
+        return None
+
+    if sa_path and not getenv("GOOGLE_DELEGATED_USER"):
+        log_warning("Gmail requires GOOGLE_DELEGATED_USER for service account auth")
+        return None
+
+    return GmailContextProvider(model=default_model(), write=True)
+
+
+def _create_calendar_provider() -> GoogleCalendarContextProvider | None:
+    sa_path = getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
+    has_oauth = getenv("GOOGLE_CLIENT_ID") and getenv("GOOGLE_CLIENT_SECRET")
+
+    if not sa_path and not has_oauth:
+        return None
+
+    return GoogleCalendarContextProvider(model=default_model(), write=True)
 
 
 def _create_mcp_providers() -> list[MCPContextProvider]:
