@@ -219,9 +219,7 @@ def w5_gdrive_uses_alldrives_subclass() -> None:
     provider = GDriveContextProvider(service_account_path="/tmp/eval-wiring-stub.json")
     toolkit = provider._ensure_tools()
     missing = [
-        flag
-        for flag in ("supports_all_drives", "include_items_from_all_drives")
-        if not getattr(toolkit, flag, False)
+        flag for flag in ("supports_all_drives", "include_items_from_all_drives") if not getattr(toolkit, flag, False)
     ]
     if missing or getattr(toolkit, "corpora", None) != "allDrives":
         raise AssertionError(
