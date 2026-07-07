@@ -204,22 +204,30 @@ def w4_context_protocol_shape() -> None:
 
 
 def w5_gdrive_uses_alldrives_subclass() -> None:
-    """GDrive provider must use `AllDrivesGoogleDriveTools`, not bare `GoogleDriveTools`.
+    """GDrive provider must cover Shared Drives, not just user-owned files.
 
-    The bare upstream toolkit queries `corpora=user` and misses every file
-    the SA doesn't own directly (shared folders, Shared Drives). Regressing
-    to bare `GoogleDriveTools` silently breaks every real deployment, so
-    pin the subclass here.
+    A bare ``corpora=user`` toolkit misses every file the service account
+    doesn't own directly (shared folders, Shared Drives). As of agno 2.7 the
+    dedicated ``AllDrivesGoogleDriveTools`` subclass was folded into
+    ``GoogleDriveTools`` via the ``corpora`` / ``supports_all_drives`` /
+    ``include_items_from_all_drives`` params, and ``GDriveContextProvider``
+    defaults them to full-drive coverage — so pin those flags here instead of
+    the (now-removed) subclass.
     """
     from agno.context.gdrive import GDriveContextProvider
-    from agno.context.gdrive.tools import AllDrivesGoogleDriveTools
 
     provider = GDriveContextProvider(service_account_path="/tmp/eval-wiring-stub.json")
     toolkit = provider._ensure_tools()
-    if not isinstance(toolkit, AllDrivesGoogleDriveTools):
+    missing = [
+        flag
+        for flag in ("supports_all_drives", "include_items_from_all_drives")
+        if not getattr(toolkit, flag, False)
+    ]
+    if missing or getattr(toolkit, "corpora", None) != "allDrives":
         raise AssertionError(
-            f"GDriveContextProvider._ensure_tools() returned {type(toolkit).__name__}; "
-            f"expected AllDrivesGoogleDriveTools so shared-folder / Shared-Drive files are visible"
+            "GDriveContextProvider toolkit is not configured for Shared-Drive coverage "
+            f"(corpora={getattr(toolkit, 'corpora', None)!r}, missing flags={missing}); "
+            "expected corpora='allDrives' + supports_all_drives + include_items_from_all_drives"
         )
 
 
