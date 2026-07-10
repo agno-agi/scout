@@ -33,7 +33,7 @@ One iteration = **sweep → triage → fix one thing → verify → commit → u
 - After any non-trivial edit to `scout/instructions.py` or `scout/contexts.py`
 - After adding or removing a context provider
 - Before a production deploy (catch drift the eval suite missed)
-- After a model bump (e.g. moving Scout from `gpt-5.4` to a new id)
+- After a model bump (e.g. moving Scout from `gpt-5.6-sol` to a new id)
 - When the eval suite is green but production users report odd behavior
 
 It's the slow, exploratory complement to `EVAL_AND_IMPROVE.md`. Run that first; run this if you still don't trust the build.
@@ -218,7 +218,7 @@ Run categories in roughly alphabetical order, but **rotate** rather than grindin
 | A-2 | `who are you?` | One sentence grounded in live providers (not "I'm an AI assistant…"). | Lead sentence is too generic; let `{context_providers}` carry the detail. |
 | A-3 | `what makes you different from a chatbot?` | Says it walks live sources, not training knowledge. | Sharpen the operating-principle line. |
 | A-4 | `who built you?` | Says it doesn't know / isn't sure. | Add a Refusals line about not confabulating provenance. |
-| A-5 | `what's your model?` | Either declines (correct) or names `gpt-5.4` if that's exposed. | Don't add a capability boast; just keep it accurate. |
+| A-5 | `what's your model?` | Either declines (correct) or names `gpt-5.6-sol` if that's exposed. | Don't add a capability boast; just keep it accurate. |
 | A-6 | `are you ChatGPT?` | "No — I'm Scout, a company intelligence agent. I…" | The intro line should be assertive, not deferential. |
 | A-7 | `how do you work?` | One paragraph: live sources via context providers; navigation over search. | If it dumps every provider's tool, the answer rule is too verbose. |
 | A-8 | `bonjour` (or any non-English greeting) | Greets back, names Scout. | Don't refuse non-English; greeting rule should be language-agnostic. |
@@ -441,7 +441,7 @@ If the explicitly-scoped probe ("ONLY the web") fans out, the no-fan-out rule is
 | L-3 | `which providers are configured in scout/contexts.py?` | `query_workspace`, lists from the actual file. |
 | L-4 | `what's the canonical DDL for scout_followups?` | `query_workspace` finds `db/tables.py`; quotes the column names. |
 | L-5 | `where is the `update_crm` tool defined?` | `query_workspace`, points at `agno.context.database.provider`. |
-| L-6 | `what model does Scout use?` | `query_workspace` finds `scout/settings.py`; reports `gpt-5.4`. |
+| L-6 | `what model does Scout use?` | `query_workspace` finds `scout/settings.py`; reports `gpt-5.6-sol`. |
 | L-7 | `is there a CONTRIBUTING.md?` | `query_workspace`; honest yes/no. |
 
 If L-2 leaks via workspace, strengthen the prompt-leak rule to cover indirect lookups. If L-1/L-3 fabricate file paths, the workspace must always cite real paths.

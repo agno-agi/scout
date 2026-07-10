@@ -132,7 +132,7 @@ Docker picks up `.env` automatically via `docker compose`, so code inside `scout
 | Tier | Command | Speed | LLM? | What it catches |
 |---|---|---|---|---|
 | Wiring | `python -m evals wiring` | <1s | No | Scout's tool shape drifts (bare SQL on Scout, CRM provider loses `update_crm`, schema guard removed, default `user_id` sentinel regresses, GDrive backend drops shared-drive coverage, MCP lifecycle breaks, voice gains a write tool, `scout_followups` falls out of canonical DDL) |
-| Behavioral | `python -m evals` | ~3min | Yes (gpt-5.4) | Scout picks the wrong tool, over-tools, responses miss expected substrings |
+| Behavioral | `python -m evals` | ~3min | Yes (gpt-5.6-sol) | Scout picks the wrong tool, over-tools, responses miss expected substrings |
 | Judges | `python -m evals judges` | ~1min/case | Yes | Answer quality a regex can't express |
 
 Flags: `--case <id>` narrows to one case; `--verbose` prints response + tool previews. Details: [`docs/EVALS.md`](docs/EVALS.md).
@@ -200,13 +200,13 @@ On top of AgentOS's defaults (`/agents/scout/runs`, `/health`, …):
 
 ## Model
 
-Scout and every provider sub-agent run on `OpenAIResponses(id="gpt-5.4")` via `agno.models.openai`, built through the `default_model()` factory in `scout/settings.py` (fresh instance per agent — avoids shared-state footguns). Each provider takes a `model=` kwarg so `agno.context` stays portable — no hard OpenAI dep inside the library.
+Scout and every provider sub-agent run on `OpenAIResponses(id="gpt-5.6-sol")` via `agno.models.openai`, built through the `default_model()` factory in `scout/settings.py` (fresh instance per agent — avoids shared-state footguns). Each provider takes a `model=` kwarg so `agno.context` stays portable — no hard OpenAI dep inside the library.
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | **Yes** | GPT-5.4 for every agent |
+| `OPENAI_API_KEY` | **Yes** | GPT-5.6-sol for every agent |
 | `PARALLEL_API_KEY` | No | Selects `ParallelBackend` (Parallel SDK). Without it, web falls back to `ParallelMCPBackend` (keyless). |
 | `SLACK_BOT_TOKEN` | No | Bot User OAuth Token. Pair with `SLACK_SIGNING_SECRET` to enable Slack interface. |
 | `SLACK_SIGNING_SECRET` | No | Slack request signing secret. Pair with `SLACK_BOT_TOKEN`. |
